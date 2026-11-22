@@ -9,3 +9,4 @@ supabase/.temp
 supabase/.branches
 .superpowers
 next-env.d.ts
+*.tsbuildinfo
