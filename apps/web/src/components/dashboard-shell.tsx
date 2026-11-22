@@ -47,7 +47,7 @@ export function DashboardShell({
           ))}
         </nav>
         <form action={signOut} className="px-4 pb-4 lg:px-5">
-          <Button type="submit" variant="secondary" size="sm">
+          <Button type="submit" variant="secondary">
             Keluar
           </Button>
         </form>

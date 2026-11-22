@@ -11,6 +11,8 @@ export type FormState = {
   error?: string;
   fieldErrors?: Record<string, string>;
   sent?: boolean;
+  /** Isian yang dikembalikan ke formulir supaya tidak hilang saat ada galat (kata sandi tidak ikut). */
+  values?: { email?: string; full_name?: string };
 };
 
 const field = (data: FormData, name: string) => String(data.get(name) ?? '').trim();
@@ -23,11 +25,12 @@ export async function signIn(_prev: FormState, data: FormData): Promise<FormStat
   const fieldErrors: Record<string, string> = {};
   if (!email) fieldErrors.email = 'Email wajib diisi.';
   if (!password) fieldErrors.password = 'Kata sandi wajib diisi.';
-  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+  const values = { email };
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors, values };
 
   const supabase = await createServerSupabase();
   const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: authErrorMessage(error.code) };
+  if (error) return { error: authErrorMessage(error.code), values };
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -53,7 +56,8 @@ export async function signUp(_prev: FormState, data: FormData): Promise<FormStat
     fieldErrors.email = 'Format email tidak valid.';
   if (password.length < 8) fieldErrors.password = 'Kata sandi minimal 8 karakter.';
   if (!consent) fieldErrors.consent = 'Setujui kebijakan privasi untuk mendaftar.';
-  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+  const values = { email, full_name: fullName };
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors, values };
 
   const supabase = await createServerSupabase();
   const { error } = await supabase.auth.signUp({
@@ -64,7 +68,7 @@ export async function signUp(_prev: FormState, data: FormData): Promise<FormStat
       emailRedirectTo: `${publicEnv().siteUrl}/auth/konfirmasi?next=${encodeURIComponent(next)}`,
     },
   });
-  if (error) return { error: authErrorMessage(error.code) };
+  if (error) return { error: authErrorMessage(error.code), values };
   return { sent: true };
 }
 

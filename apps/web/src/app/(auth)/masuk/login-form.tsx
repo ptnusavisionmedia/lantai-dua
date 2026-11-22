@@ -26,6 +26,7 @@ export function LoginForm({
       <TextField
         label="Email"
         name="email"
+        defaultValue={state.values?.email}
         type="email"
         autoComplete="email"
         required

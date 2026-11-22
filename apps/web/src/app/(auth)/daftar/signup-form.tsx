@@ -22,6 +22,7 @@ export function SignupForm({ next }: { next?: string }) {
       <TextField
         label="Nama lengkap"
         name="full_name"
+        defaultValue={state.values?.full_name}
         autoComplete="name"
         required
         error={state.fieldErrors?.full_name}
@@ -29,6 +30,7 @@ export function SignupForm({ next }: { next?: string }) {
       <TextField
         label="Email"
         name="email"
+        defaultValue={state.values?.email}
         type="email"
         autoComplete="email"
         required

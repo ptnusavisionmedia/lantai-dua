@@ -10,7 +10,8 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 /** Kolom isian dengan label yang selalu terlihat; teks bantuan dan pesan galat ada di bawah kolom. */
 export function TextField({ label, name, error, help, type = 'text', ...input }: TextFieldProps) {
   const id = `field-${name}`;
-  const describedBy = [help && `${id}-help`, error && `${id}-error`].filter(Boolean).join(' ');
+  const showHelp = Boolean(help) && !error;
+  const describedBy = [showHelp && `${id}-help`, error && `${id}-error`].filter(Boolean).join(' ');
   return (
     <div className="grid gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold text-ink">
@@ -27,7 +28,7 @@ export function TextField({ label, name, error, help, type = 'text', ...input }:
         }`}
         {...input}
       />
-      {help && !error && (
+      {showHelp && (
         <p id={`${id}-help`} className="text-[13px] text-ink-muted">
           {help}
         </p>
