@@ -134,3 +134,98 @@ describe('variant constraints', () => {
     expect(stock.error?.code).toBe('23514');
   });
 });
+
+describe('template changes keep existing specs valid', () => {
+  const admin = () => adminClient();
+  const attr = (key: string) =>
+    admin().from('category_attributes').select('id').eq('category_id', f.catId).eq('key', key);
+
+  beforeAll(async () => {
+    const { error } = await admin()
+      .from('products')
+      .update({ specs: { weight_g: 58, shape: 'Simetris', sensor: 'PAW3395' } })
+      .eq('id', f.pOn);
+    if (error) throw new Error(error.message);
+  });
+
+  it('rejects removing an option that a product uses', async () => {
+    const { error } = await admin()
+      .from('category_attributes')
+      .update({ options: ['Ergonomis kanan'] })
+      .eq('category_id', f.catId)
+      .eq('key', 'shape');
+    expect(error?.code).toBe('22023');
+    expect(error?.message).toContain('shape');
+  });
+
+  it('rejects changing the type of an attribute that has values', async () => {
+    const { error } = await admin()
+      .from('category_attributes')
+      .update({ type: 'text' })
+      .eq('category_id', f.catId)
+      .eq('key', 'weight_g');
+    expect(error?.code).toBe('22023');
+  });
+
+  it('rejects deleting an attribute that a product uses', async () => {
+    const { error } = await admin()
+      .from('category_attributes')
+      .delete()
+      .eq('category_id', f.catId)
+      .eq('key', 'sensor');
+    expect(error?.code).toBe('22023');
+    expect((await attr('sensor')).data).toHaveLength(1);
+  });
+
+  it('allows deleting an attribute nobody uses', async () => {
+    const { error } = await admin()
+      .from('category_attributes')
+      .delete()
+      .eq('category_id', f.catId)
+      .eq('key', 'wireless');
+    expect(error).toBeNull();
+    expect((await attr('wireless')).data).toHaveLength(0);
+  });
+
+  it('rejects moving a product whose variants do not fit the new category', async () => {
+    const variant = await admin()
+      .from('product_variants')
+      .insert({
+        product_id: f.pRef,
+        sku: `${f.prefix}v-move`,
+        name: 'Merah',
+        price_idr: 1,
+        attributes: { color: 'Merah' },
+      });
+    if (variant.error) throw new Error(variant.error.message);
+    const { error } = await admin()
+      .from('products')
+      .update({ category_id: f.catOffId })
+      .eq('id', f.pRef);
+    expect(error?.code).toBe('22023');
+    expect(error?.message).toContain('color');
+  });
+});
+
+describe('owner edits through the API', () => {
+  it('lets the owner edit product specs', async () => {
+    const { data, error } = await clientFor('owner')
+      .from('products')
+      .update({ specs: { weight_g: 60 } })
+      .eq('id', f.pOn)
+      .select('id');
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('lets the owner edit a template attribute', async () => {
+    const { data, error } = await clientFor('owner')
+      .from('category_attributes')
+      .update({ label: 'Bobot (gram)' })
+      .eq('category_id', f.catId)
+      .eq('key', 'weight_g')
+      .select('id');
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+});
