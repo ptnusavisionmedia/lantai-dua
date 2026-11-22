@@ -9,8 +9,15 @@
     "E2E_PASSWORD"
   ],
   "tasks": {
-    "typecheck": {},
-    "test": {},
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "typecheck": {
+      "dependsOn": ["transit"]
+    },
+    "test": {
+      "dependsOn": ["transit"]
+    },
     "build": {
       "env": [
         "NEXT_PUBLIC_SUPABASE_URL",
