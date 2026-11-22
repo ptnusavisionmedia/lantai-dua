@@ -1,0 +1,58 @@
+/* Dibuat otomatis oleh packages/tokens/scripts/write-theme.ts. Jangan diedit manual. */
+@theme {
+  --color-*: initial;
+  --color-bg: #F5F4F0;
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: #ECEBE6;
+  --color-border: #DDDBD4;
+  --color-border-input: #8A8E92;
+  --color-ink: #141719;
+  --color-ink-muted: #565B5F;
+  --color-ink-subtle: #7C8185;
+  --color-on-primary: #FFFFFF;
+  --color-primary: #0E4B57;
+  --color-primary-hover: #0A3A44;
+  --color-primary-soft: #E2EDEE;
+  --color-accent: #B5612C;
+  --color-accent-ink: #95491C;
+  --color-accent-soft: #F6E9DF;
+  --color-success: #1E7A4E;
+  --color-success-soft: #E3F2EA;
+  --color-warning: #8A5A00;
+  --color-warning-soft: #FBF0D9;
+  --color-danger: #B42318;
+  --color-danger-soft: #FBE7E5;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-overlay: 0 1px 2px rgb(20 23 25 / 0.06), 0 8px 24px rgb(20 23 25 / 0.08);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@theme inline {
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-text: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+:root {
+  --font-display-stretch: 85%;
+  --dur-instant: 90ms;
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+  --dur-showcase: 640ms;
+  --stagger: 40ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-base: 120ms;
+    --dur-slow: 120ms;
+    --dur-showcase: 0ms;
+    --stagger: 0ms;
+  }
+}
