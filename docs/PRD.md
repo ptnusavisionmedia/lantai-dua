@@ -741,7 +741,7 @@ Setiap akhir fase ditutup dengan demo singkat ke pembimbing tempat magang dan gu
 | Kuota build gratis EAS terbatas per bulan (cek angka terbaru) | Build APK tertahan menjelang demo | Selama pengembangan pakai Expo Go atau development build lokal. Build EAS hanya untuk rilis. |
 | Data spek model asli salah atau tidak lengkap | Bandingkan menyesatkan dan penilai meragukan datanya | Ambil spek dari situs resmi pabrikan, catat sumbernya di seed, dan tandai kontur sebagai "perkiraan bentuk". |
 | Proyek Supabase gratis otomatis dijeda setelah sekitar seminggu tidak aktif (cek kebijakan terbaru) | Demo gagal saat presentasi | Buka proyek beberapa hari sebelum demo, jadwalkan ping rutin, atau upgrade paket. |
-| Kuota email bawaan Supabase sangat kecil | Email verifikasi tidak terkirim | Pakai SMTP sendiri sejak Fase 0. |
+| Kuota email bawaan Supabase sangat kecil, dan template email baru bisa diubah setelah memakai SMTP sendiri | Email verifikasi tidak terkirim | Fase 0 memakai akun demo yang dibuat lewat admin, dan halaman verifikasi menerima tautan bawaan Supabase. SMTP sendiri dipasang bersamaan dengan deploy di Fase 1, karena butuh domain. |
 | Hak cipta foto dan merek dagang (model asli dipakai) | Masalah karena situs online dan bisa dibuka publik | Foto sendiri atau buatan AI, tanpa logo merek sebagai identitas toko, ditambah penanda fiktif di footer. |
 | Celah RLS membuka data antar peran | Kebocoran data | Tes RLS otomatis untuk setiap peran. |
 | Pemesanan bersamaan dari web dan aplikasi | Reservasi bentrok, stok minus | Constraint dan transaksi di database (§11.1). |

@@ -324,10 +324,13 @@ Di aplikasi, skalanya sama, dengan `display` maksimal 40 px dan `h1` 30 px.
 
 ## 10. Token
 
-- [`tokens.css`](tokens.css): variabel CSS untuk web, berisi palet A.
-- [`tokens.json`](tokens.json): format W3C Design Tokens untuk palet A. Nanti dipindah ke `packages/tokens` di monorepo (PRD §12.2) dan dipakai web maupun aplikasi.
+**Sumber kebenaran token sekarang [`packages/tokens/src/tokens.ts`](../../packages/tokens/src/tokens.ts).** Web memakai `packages/tokens/theme.css`, yang dibuat otomatis lewat `pnpm --filter @lantai-dua/tokens build`. Ada tes yang gagal kalau `theme.css` tidak sinkron dengan `tokens.ts`, atau kalau ada pasangan warna yang tidak lolos AA. Aplikasi mobile nanti membaca `tokens.ts` langsung.
 
-`preview.html` menyimpan salinan isi `tokens.css` supaya bisa dibuka tanpa server. Kalau token berubah, perbarui keduanya.
+File di folder ini sekarang hanya salinan v0.1 untuk pratinjau:
+- [`tokens.css`](tokens.css) dan [`tokens.json`](tokens.json): snapshot palet A.
+- `preview.html` menyimpan salinan isi `tokens.css` supaya bisa dibuka tanpa server.
+
+Kalau token berubah, ubah `tokens.ts` dulu, lalu perbarui salinan ini kalau pratinjaunya masih dipakai.
 
 ---
 
