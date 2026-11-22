@@ -234,7 +234,6 @@ export type Database = {
           code: string
           created_at: string
           id: string
-          notes: string
           status: Database["public"]["Enums"]["demo_unit_status"]
           updated_at: string
           variant_id: string
@@ -244,7 +243,6 @@ export type Database = {
           code: string
           created_at?: string
           id?: string
-          notes?: string
           status?: Database["public"]["Enums"]["demo_unit_status"]
           updated_at?: string
           variant_id: string
@@ -254,7 +252,6 @@ export type Database = {
           code?: string
           created_at?: string
           id?: string
-          notes?: string
           status?: Database["public"]["Enums"]["demo_unit_status"]
           updated_at?: string
           variant_id?: string
@@ -556,6 +553,10 @@ export type Database = {
       }
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      revalidate_category_values: {
+        Args: { p_category_id: string }
+        Returns: undefined
+      }
       validate_spec_values: {
         Args: {
           p_category_id: string

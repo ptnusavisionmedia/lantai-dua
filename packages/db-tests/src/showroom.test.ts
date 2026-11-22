@@ -7,6 +7,9 @@ let catalog: CatalogFixture;
 let areaId: string;
 let uAvail: string;
 let uRetired: string;
+let uInactiveArea: string;
+let uHiddenVariant: string;
+let areaOffId: string;
 let codeAvail: string;
 
 beforeAll(async () => {
@@ -26,31 +29,44 @@ beforeAll(async () => {
   if (area.error) throw new Error(`Fixture demo_areas gagal: ${area.error.message}`);
   areaId = area.data.id;
 
-  const n = Math.floor(Math.random() * 998);
-  codeAvail = `DM-Z-${String(n).padStart(3, '0')}`;
+  const areaOff = await admin
+    .from('demo_areas')
+    .insert({
+      slug: `${prefix()}desk-off`,
+      name: 'Meja nonaktif',
+      kind: 'desk',
+      capacity: 1,
+      is_reservable: true,
+      is_active: false,
+    })
+    .select('id')
+    .single();
+  if (areaOff.error) throw new Error(`Fixture demo_areas gagal: ${areaOff.error.message}`);
+  areaOffId = areaOff.data.id;
+
+  const n = Math.floor(Math.random() * 990);
+  const code = (i: number) => `DM-Z-${String(n + i).padStart(3, '0')}`;
+  codeAvail = code(0);
   const units = await admin
     .from('demo_units')
-    .insert(
-      [
-        { variant_id: catalog.vOn, area_id: areaId, code: codeAvail, status: 'available' },
-        {
-          variant_id: catalog.vOn,
-          area_id: areaId,
-          code: `DM-Z-${String(n + 1).padStart(3, '0')}`,
-          status: 'retired',
-        },
-      ],
-      { defaultToNull: false },
-    )
-    .select('id, status');
+    .insert([
+      { variant_id: catalog.vOn, area_id: areaId, code: code(0), status: 'available' },
+      { variant_id: catalog.vOn, area_id: areaId, code: code(1), status: 'retired' },
+      { variant_id: catalog.vOn, area_id: areaOffId, code: code(2), status: 'available' },
+      { variant_id: catalog.vOff, area_id: areaId, code: code(3), status: 'available' },
+    ])
+    .select('id, code');
   if (units.error) throw new Error(`Fixture demo_units gagal: ${units.error.message}`);
-  uAvail = units.data.find((u) => u.status === 'available')?.id;
-  uRetired = units.data.find((u) => u.status === 'retired')?.id;
+  const idOf = (c: string) => units.data.find((u) => u.code === c)?.id;
+  uAvail = idOf(code(0));
+  uRetired = idOf(code(1));
+  uInactiveArea = idOf(code(2));
+  uHiddenVariant = idOf(code(3));
 });
 
 afterAll(async () => {
   const admin = adminClient();
-  await admin.from('demo_units').delete().eq('area_id', areaId);
+  await admin.from('demo_units').delete().in('area_id', [areaId, areaOffId]);
   await admin.from('demo_areas').delete().like('slug', `${prefix()}%`);
   await deleteCatalogFixture(admin, prefix());
 });
@@ -62,6 +78,27 @@ describe('demo units', () => {
       .select('code')
       .in('id', [uAvail, uRetired]);
     expect(data?.map((r) => r.code)).toEqual([codeAvail]);
+  });
+
+  it('hides units in inactive areas and of hidden variants from anon', async () => {
+    const { data } = await anonClient()
+      .from('demo_units')
+      .select('id')
+      .in('id', [uAvail, uInactiveArea, uHiddenVariant]);
+    expect(data?.map((r) => r.id)).toEqual([uAvail]);
+  });
+
+  it('shows staff every unit', async () => {
+    const { data } = await clientFor('operator')
+      .from('demo_units')
+      .select('id')
+      .in('id', [uAvail, uRetired, uInactiveArea, uHiddenVariant]);
+    expect(data).toHaveLength(4);
+  });
+
+  it('keeps internal notes out of the public units table', async () => {
+    const { error } = await anonClient().from('demo_units').select('notes').limit(1);
+    expect(error?.code).toBe('42703');
   });
 
   it('shows staff retired units', async () => {

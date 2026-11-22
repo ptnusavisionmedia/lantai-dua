@@ -522,7 +522,7 @@ Nama tabel di bawah boleh disesuaikan oleh builder. Yang wajib dipertahankan ada
 | `product_variants` | produk, SKU, nama varian, atribut varian (warna, switch), harga, stok jual | Uang disimpan sebagai bilangan bulat rupiah |
 | `product_images` | produk atau varian, lokasi file di Storage, urutan, jenis foto (utama / samping / detail) | |
 | `demo_areas` | nama (Meja Kontrol, Stasiun Dengar, dsb.), jenis (meja / stasiun / bebas), kapasitas, bisa direservasi, status aktif | Kapasitas dipakai aturan anti-bentrok |
-| `demo_units` | varian, area demo, kode unit (misalnya `DM-M-012`), status (tersedia / dipakai / diservis / pensiun), catatan | Unit demo tidak pernah dihitung sebagai stok jual |
+| `demo_units` | varian, area demo, kode unit (misalnya `DM-M-012`), status (tersedia / dipakai / diservis / pensiun) | Unit demo tidak pernah dihitung sebagai stok jual. Catatan internal staf disimpan di `demo_unit_events`, yang hanya bisa dibaca staf. |
 | `store_settings` | alamat, kontak, durasi sesi, batas reservasi, batas waktu pengambilan | Satu baris |
 | `opening_hours`, `store_closures` | jam buka per hari, tanggal libur | |
 | `reservations` | kode, pelanggan, waktu mulai dan selesai, status, catatan, alasan batal | |
