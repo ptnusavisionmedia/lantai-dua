@@ -1,0 +1,10 @@
+node_modules
+.next
+.turbo
+*.local
+.env*.local
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches
+.superpowers

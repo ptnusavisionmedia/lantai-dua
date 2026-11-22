@@ -1,0 +1,28 @@
+{
+  "name": "lantai-dua",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:rls": "pnpm --filter @lantai-dua/db-tests test:rls",
+    "e2e": "pnpm --filter @lantai-dua/web e2e",
+    "dev": "pnpm --filter @lantai-dua/web dev",
+    "db:push": "supabase db push --include-seed",
+    "db:types": "node scripts/db-types.ts",
+    "db:seed-users": "node scripts/seed-users.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@supabase/supabase-js": "2.119.2",
+    "supabase": "3.2.0",
+    "turbo": "2.11.13",
+    "typescript": "6.0.3"
+  }
+}
