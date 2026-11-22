@@ -112,8 +112,7 @@ Login ke supabase.com, lalu buat project baru:
 
 - Authentication → URL Configuration: Site URL `http://localhost:3000`, dan Redirect URLs `http://localhost:3000/**`.
 - Authentication → Sign In / Providers → Email: pastikan **Confirm email** aktif.
-- Authentication → Email Templates → **Confirm signup**: ganti `href` tautannya menjadi
-  `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email`
+- Template email **tidak perlu diubah**. Supabase hanya mengizinkan edit template kalau sudah memakai SMTP sendiri, jadi Fase 0 memakai template bawaan. Halaman `/auth/konfirmasi` (Task 9) menangani tautan bawaan itu.
 
 - [ ] **Step 4: Catat kunci project**
 
@@ -1069,10 +1068,12 @@ Perilaku:
   - Validasi: `full_name` wajib diisi, email, kata sandi minimal 8 karakter, dan kotak persetujuan kebijakan privasi wajib dicentang. Setiap pesan error muncul di dekat kolomnya.
   - Panggil `auth.signUp` dengan `options.data.full_name` dan `emailRedirectTo: \`${NEXT_PUBLIC_SITE_URL}/auth/konfirmasi?next=${encodeURIComponent(safeNextPath(next) ?? '/akun')}\``.
   - Kalau berhasil, kembalikan `{ sent: true }`. Formulir lalu menampilkan `Cek email untuk verifikasi akun, lalu klik tautannya.`
-- **`/auth/konfirmasi`:**
-  - Ambil `token_hash` dan `type`, lalu `verifyOtp`.
-  - Berhasil → `redirect(safeNextPath(next) ?? '/akun')`.
-  - Gagal → `redirect('/masuk?error=verifikasi')`. Halaman `/masuk` lalu menampilkan `Tautan verifikasi tidak valid atau sudah kedaluwarsa.`
+- **`/auth/konfirmasi`:** menangani dua bentuk tautan.
+  - Template bawaan (Fase 0): Supabase sudah memverifikasi email, lalu mengarahkan ke sini dengan `?code=…`. Tukar dengan `exchangeCodeForSession(code)`.
+    - Berhasil → `redirect(safeNextPath(next) ?? '/akun')`.
+    - Gagal, misalnya karena tautan dibuka di browser atau HP lain → `redirect('/masuk?pesan=terverifikasi')`. Halaman `/masuk` lalu menampilkan `Email sudah terverifikasi. Silakan masuk.`
+  - Template `token_hash` (setelah SMTP sendiri dipasang di Fase 1): kalau ada `token_hash` dan `type`, jalankan `verifyOtp` lalu redirect dengan aturan yang sama.
+  - Ada parameter `error` / `error_description`, atau `verifyOtp` gagal → `redirect('/masuk?error=verifikasi')`. Halaman `/masuk` lalu menampilkan `Tautan verifikasi tidak valid atau sudah kedaluwarsa.`
 - **`/akun-nonaktif`:** judul `Akun ini sedang dinonaktifkan`, kalimat `Hubungi pemilik toko kalau ini keliru.`, dan tombol **Keluar**.
 - **Dashboard:** setiap layout memanggil `requireRole`.
 

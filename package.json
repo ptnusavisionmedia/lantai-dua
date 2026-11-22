@@ -14,7 +14,7 @@
     "test:rls": "pnpm --filter @lantai-dua/db-tests test:rls",
     "e2e": "pnpm --filter @lantai-dua/web e2e",
     "dev": "pnpm --filter @lantai-dua/web dev",
-    "db:push": "supabase db push --include-seed",
+    "db:push": "supabase db push --remote --include-seed",
     "db:types": "node scripts/db-types.ts",
     "db:seed-users": "node scripts/seed-users.ts"
   },

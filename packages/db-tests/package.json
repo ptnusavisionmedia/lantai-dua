@@ -1,0 +1,16 @@
+{
+  "name": "@lantai-dua/db-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:rls": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.119.2",
+    "@types/node": "26.6.6",
+    "typescript": "6.0.3",
+    "vitest": "5.1.1"
+  }
+}
