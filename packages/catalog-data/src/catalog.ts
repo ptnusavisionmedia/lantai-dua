@@ -1,4 +1,4 @@
-import type { CatalogSeed, SeedProduct, SpecSource } from './types';
+import type { CatalogSeed, SeedProduct, SpecSource } from './types.ts';
 
 /**
  * Data produk asli untuk Fase 1A.

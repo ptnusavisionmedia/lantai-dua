@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@lantai-dua/catalog-data": "workspace:*",
     "@supabase/supabase-js": "2.119.2",
     "@types/node": "26.6.6",
     "typescript": "6.0.3",

@@ -16,7 +16,8 @@
     "dev": "pnpm --filter @lantai-dua/web dev",
     "db:push": "supabase db push --remote --include-seed",
     "db:types": "node scripts/db-types.ts",
-    "db:seed-users": "node scripts/seed-users.ts"
+    "db:seed-users": "node scripts/seed-users.ts",
+    "db:seed-catalog": "node scripts/seed-catalog.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
