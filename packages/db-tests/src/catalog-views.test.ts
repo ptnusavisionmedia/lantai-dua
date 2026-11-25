@@ -9,6 +9,10 @@ let areaIds: string[] = [];
 let pFree: string;
 let unitCodes: string[] = [];
 
+async function ok(label: string, p: PromiseLike<{ error: { message: string } | null }>) {
+  const { error } = await p;
+  if (error) throw new Error(`${label}: ${error.message}`);
+}
 async function must<T>(
   label: string,
   p: PromiseLike<{ data: T; error: { message: string } | null }>,
@@ -23,7 +27,7 @@ beforeAll(async () => {
   const admin = adminClient();
   f = await createCatalogFixture(admin, prefix());
 
-  await must('stok vOn', admin.from('product_variants').update({ stock_qty: 2 }).eq('id', f.vOn));
+  await ok('stok vOn', admin.from('product_variants').update({ stock_qty: 2 }).eq('id', f.vOn));
   const vB = await must(
     'varian vB',
     admin
@@ -72,7 +76,7 @@ beforeAll(async () => {
   // Unit yang TIDAK boleh dihitung sengaja diberi kode terkecil, supaya aturan yang bocor langsung ketahuan.
   const n = Math.floor(Math.random() * 990);
   unitCodes = [0, 1, 2, 3].map((i) => `DM-Y-${String(n + i).padStart(3, '0')}`);
-  await must(
+  await ok(
     'unit demo',
     admin.from('demo_units').insert([
       { variant_id: f.vOn, area_id: deskOff, code: unitCodes[0], status: 'available' },
@@ -111,7 +115,7 @@ beforeAll(async () => {
       .single(),
   );
   pFree = free.id;
-  await must(
+  await ok(
     'varian bebas coba',
     admin.from('product_variants').insert({
       product_id: pFree,
