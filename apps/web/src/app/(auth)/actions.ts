@@ -13,6 +13,11 @@ export type FormState = {
   sent?: boolean;
   /** Isian yang dikembalikan ke formulir supaya tidak hilang saat ada galat (kata sandi tidak ikut). */
   values?: { email?: string; full_name?: string };
+  /**
+   * Tampilkan tautan "Daftar dulu". Supabase tidak membedakan akun yang belum ada dengan kata sandi
+   * salah (supaya email terdaftar tidak bisa ditebak), jadi petunjuk ini muncul untuk keduanya.
+   */
+  suggestSignup?: boolean;
 };
 
 const field = (data: FormData, name: string) => String(data.get(name) ?? '').trim();
@@ -30,7 +35,13 @@ export async function signIn(_prev: FormState, data: FormData): Promise<FormStat
 
   const supabase = await createServerSupabase();
   const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: authErrorMessage(error.code), values };
+  if (error) {
+    return {
+      error: authErrorMessage(error.code),
+      values,
+      suggestSignup: error.code === 'invalid_credentials',
+    };
+  }
 
   const { data: profile } = await supabase
     .from('profiles')

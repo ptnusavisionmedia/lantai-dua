@@ -44,9 +44,20 @@ test('wrong password shows a clear message', async ({ page }) => {
   await page.getByLabel('Kata sandi').fill('salah-banget');
   await page.getByRole('button', { name: 'Masuk' }).click();
   // Dibatasi ke <main>: Next.js punya route announcer sendiri dengan role="alert".
-  await expect(page.getByRole('main').getByRole('alert')).toHaveText(
-    'Email atau kata sandi salah.',
-  );
+  const alert = page.getByRole('main').getByRole('alert');
+  await expect(alert).toContainText('Email atau kata sandi salah.');
+  await expect(alert).toContainText('Belum punya akun?');
+  await expect(alert.getByRole('link', { name: 'Daftar dulu' })).toHaveAttribute('href', '/daftar');
+});
+
+test('the signup hint keeps where the user was going', async ({ page }) => {
+  await page.goto('/masuk?next=%2Fakun');
+  await page.getByLabel('Email').fill('belum-daftar@lantaidua.test');
+  await page.getByLabel('Kata sandi').fill('salah-banget');
+  await page.getByRole('button', { name: 'Masuk' }).click();
+  await expect(
+    page.getByRole('main').getByRole('alert').getByRole('link', { name: 'Daftar dulu' }),
+  ).toHaveAttribute('href', '/daftar?next=%2Fakun');
 });
 
 test('external next is ignored', async ({ page }) => {

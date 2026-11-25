@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { Button } from '@/components/button';
 import { Notice } from '@/components/notice';
@@ -20,7 +21,23 @@ export function LoginForm({
 
   return (
     <form action={action} noValidate className="grid gap-4">
-      {error && <Notice tone="error">{error}</Notice>}
+      {error && (
+        <Notice tone="error">
+          {error}
+          {state.suggestSignup && (
+            <>
+              {' '}
+              Belum punya akun?{' '}
+              <Link
+                href={next ? `/daftar?next=${encodeURIComponent(next)}` : '/daftar'}
+                className="font-semibold underline underline-offset-4"
+              >
+                Daftar dulu
+              </Link>
+            </>
+          )}
+        </Notice>
+      )}
       {!error && notice && <Notice tone="success">{notice}</Notice>}
       <input type="hidden" name="next" value={next ?? ''} />
       <TextField
