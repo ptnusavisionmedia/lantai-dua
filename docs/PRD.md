@@ -665,7 +665,7 @@ Aturan lengkapnya ada di **[design system](../design-system/lantai-dua/MASTER.md
 | Mouse referensi untuk Bandingkan | ±20 |
 | Mouse dengan data kontur | 6–8 |
 | Area demo | Meja Kontrol (3 meja) dan Meja Permukaan (tanpa reservasi) |
-| Unit demo | ±15 di Meja Kontrol, ditambah semua pad dan deskmat di Meja Permukaan |
+| Unit demo | ±15 di Meja Kontrol. Pad dan deskmat dipajang di Meja Permukaan tanpa baris unit demo, karena kategorinya bebas coba. |
 | Jam buka | Senin–Sabtu 10.00–21.00, Minggu 12.00–20.00 |
 | Akun | 1 pemilik, 2 operator, 3 pelanggan |
 | Contoh transaksi | Beberapa reservasi dan pesanan dalam berbagai status |
