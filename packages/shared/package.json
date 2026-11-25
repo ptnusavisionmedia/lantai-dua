@@ -6,13 +6,15 @@
   "exports": {
     "./roles": "./src/roles.ts",
     "./access": "./src/access.ts",
-    "./database": "./src/database.types.ts"
+    "./database": "./src/database.types.ts",
+    "./catalog": "./src/catalog/index.ts"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "26.6.6",
     "typescript": "6.0.3",
     "vitest": "5.1.1"
   }
