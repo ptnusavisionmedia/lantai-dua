@@ -18,7 +18,7 @@ import {
 } from '@lantai-dua/shared/catalog';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { type FormEvent, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../button';
 import { Search, SlidersHorizontal, X } from '../icons';
 import { FilterPanel } from './filter-panel';
@@ -108,13 +108,36 @@ export function CatalogBrowser({
 }: CatalogBrowserProps) {
   const searchParams = useSearchParams();
   const sheetRef = useRef<HTMLDialogElement>(null);
+
+  // Sheet hanya untuk layar < 1024 px. Kalau layar melebar saat sheet terbuka (tablet diputar),
+  // sheet ditutup; kalau tidak, <dialog> modal yang tersembunyi akan mengunci seluruh halaman.
+  useEffect(() => {
+    const wide = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) sheetRef.current?.close();
+    };
+    wide.addEventListener('change', onChange);
+    return () => wide.removeEventListener('change', onChange);
+  }, []);
   const urlKey = searchParams.toString();
+
+  // "Paling ringan" hanya masuk akal kalau produknya punya bobot (spec K5).
+  const canSortByWeight = attributes.some((a) => a.key === 'weight_g');
 
   const fromUrl = useMemo(() => {
     const parsed = parseCatalogQuery(searchParams, attributes);
-    // `rak` hanya berlaku di /katalog; di halaman kategori parameter itu diabaikan.
-    return basePath === '/katalog' ? parsed : { ...parsed, rak: null };
-  }, [searchParams, attributes, basePath]);
+    // Nilai yang formatnya sah tetapi tidak dikenal (merek atau rak yang tidak ada di halaman
+    // ini, misalnya dari tautan lama) diabaikan, supaya halaman tidak mendadak kosong.
+    const brands = new Set(items.map((i) => i.brandSlug));
+    const racks = new Set(items.map((i) => i.groupSlug));
+    return {
+      ...parsed,
+      merek: parsed.merek.filter((m) => brands.has(m)),
+      // `rak` hanya berlaku di /katalog; di halaman kategori parameter itu diabaikan.
+      rak: basePath === '/katalog' && parsed.rak && racks.has(parsed.rak) ? parsed.rak : null,
+      urut: parsed.urut === 'teringan' && !canSortByWeight ? 'terbaru' : parsed.urut,
+    };
+  }, [searchParams, attributes, basePath, items, canSortByWeight]);
 
   // Next menerapkan pushState di dalam transisi, jadi URL baru menyusul sesaat kemudian.
   // Sampai itu terjadi, tampilan langsung memakai query yang baru dipilih (kotak centang
@@ -209,7 +232,7 @@ export function CatalogBrowser({
             onChange={(e) => update({ ...query, urut: e.target.value as SortKey })}
             className="h-11 rounded-md border border-border-input bg-surface px-3 text-[15px] text-ink"
           >
-            {SORT_OPTIONS.map((o) => (
+            {SORT_OPTIONS.filter((o) => o.value !== 'teringan' || canSortByWeight).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -285,8 +308,13 @@ export function CatalogBrowser({
         </section>
       </div>
 
+      {/* Klik di latar (di luar sheet) menutup sheet; keyboard menutupnya dengan Esc bawaan <dialog>. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: Esc sudah ditangani <dialog> sendiri. */}
       <dialog
         ref={sheetRef}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) e.currentTarget.close();
+        }}
         aria-labelledby="filter-sheet-title"
         className="m-0 mt-auto max-h-[85dvh] w-full max-w-full overflow-hidden rounded-t-xl bg-surface p-0 text-ink backdrop:bg-ink/40 lg:hidden"
       >

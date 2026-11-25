@@ -1,7 +1,7 @@
 'use client';
 
 import type { CatalogQuery, Facet, FacetOption, Range } from '@lantai-dua/shared/catalog';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, type KeyboardEvent, useState } from 'react';
 
 type Checklist = Extract<Facet, { kind: 'checklist' }>;
 
@@ -87,12 +87,30 @@ function ChecklistGroup({
   );
 }
 
-function parseNumber(raw: string): number | undefined {
-  const cleaned = raw.replace(/[^\d.,]/g, '').replace(',', '.');
-  if (cleaned === '') return undefined;
-  const n = Number(cleaned);
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
+const rangeKey = (r: Range | null | undefined) => `${r?.min ?? ''}-${r?.max ?? ''}`;
+
+/**
+ * Harga ditulis orang Indonesia dengan titik ribuan ("1.500.000"), jadi untuk harga semua
+ * selain angka dibuang. Satuan lain (gram, mm) boleh berdesimal dengan koma atau titik ("60,5").
+ */
+function parseNumber(raw: string, integer: boolean): number | undefined {
+  const compact = raw.replace(/\s/g, '');
+  if (compact === '') return undefined;
+  if (integer) {
+    const digits = compact.replace(/\D/g, '');
+    return digits === '' ? undefined : Number(digits);
+  }
+  const decimal = compact.replace(',', '.');
+  return /^\d+(\.\d+)?$/.test(decimal) ? Number(decimal) : undefined;
 }
+
+const rupiahDigits = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+const unitDigits = new Intl.NumberFormat('id-ID', {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+});
+const show = (n: number | undefined, integer: boolean) =>
+  n === undefined ? '' : (integer ? rupiahDigits : unitDigits).format(n);
 
 /** Dua kolom min/maks. Nilai dikirim saat kolom ditinggalkan atau Enter ditekan. */
 function RangeFields({
@@ -102,6 +120,7 @@ function RangeFields({
   unit,
   value,
   bounds,
+  integer = false,
   onCommit,
 }: {
   idPrefix: string;
@@ -110,14 +129,25 @@ function RangeFields({
   unit: string | null;
   value: Range | null;
   bounds: { min: number; max: number } | null;
+  /** true untuk harga: titik dibaca sebagai pemisah ribuan. */
+  integer?: boolean;
   onCommit: (next: Range | null) => void;
 }) {
-  const [min, setMin] = useState(value?.min?.toString() ?? '');
-  const [max, setMax] = useState(value?.max?.toString() ?? '');
+  const [min, setMin] = useState(show(value?.min, integer));
+  const [max, setMax] = useState(show(value?.max, integer));
+  // Komponen ini tidak di-remount saat nilainya berubah, karena remount membuang fokus dari
+  // kolom berikutnya. Isi kolom disamakan dengan URL hanya saat nilai dari luar berubah.
+  const valueKey = rangeKey(value);
+  const [seen, setSeen] = useState(valueKey);
+  if (seen !== valueKey) {
+    setSeen(valueKey);
+    setMin(show(value?.min, integer));
+    setMax(show(value?.max, integer));
+  }
 
   const commit = () => {
-    let lo = parseNumber(min);
-    let hi = parseNumber(max);
+    let lo = parseNumber(min, integer);
+    let hi = parseNumber(max, integer);
     if (lo !== undefined && hi !== undefined && lo > hi) [lo, hi] = [hi, lo];
     const next: Range = {};
     if (lo !== undefined) next.min = lo;
@@ -126,6 +156,13 @@ function RangeFields({
     if (!same) onCommit(next.min === undefined && next.max === undefined ? null : next);
   };
   const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    commit();
+  };
+  // Form dengan dua kolom teks tanpa tombol kirim tidak terkirim lewat Enter (aturan HTML),
+  // jadi Enter ditangani langsung di tiap kolom.
+  const onEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
     e.preventDefault();
     commit();
   };
@@ -145,12 +182,13 @@ function RangeFields({
           </label>
           <input
             id={`${idPrefix}-${name}-min`}
-            inputMode="decimal"
+            inputMode={integer ? 'numeric' : 'decimal'}
             className={field}
-            placeholder={bounds ? String(bounds.min) : 'Min'}
+            placeholder={bounds ? show(bounds.min, integer) : 'Min'}
             value={min}
             onChange={(e) => setMin(e.target.value)}
             onBlur={commit}
+            onKeyDown={onEnter}
           />
           <span className="text-ink-muted" aria-hidden="true">
             –
@@ -160,20 +198,19 @@ function RangeFields({
           </label>
           <input
             id={`${idPrefix}-${name}-max`}
-            inputMode="decimal"
+            inputMode={integer ? 'numeric' : 'decimal'}
             className={field}
-            placeholder={bounds ? String(bounds.max) : 'Maks'}
+            placeholder={bounds ? show(bounds.max, integer) : 'Maks'}
             value={max}
             onChange={(e) => setMax(e.target.value)}
             onBlur={commit}
+            onKeyDown={onEnter}
           />
         </div>
       </fieldset>
     </form>
   );
 }
-
-const rangeKey = (r: Range | null | undefined) => `${r?.min ?? ''}-${r?.max ?? ''}`;
 
 export function FilterPanel({ query, brand, price, facets, onChange, idPrefix }: FilterPanelProps) {
   const setAttr = (key: string, value: CatalogQuery['attrs'][string] | null) => {
@@ -209,7 +246,8 @@ export function FilterPanel({ query, brand, price, facets, onChange, idPrefix }:
       />
 
       <RangeFields
-        key={`harga-${rangeKey(query.harga)}`}
+        key="harga"
+        integer
         idPrefix={idPrefix}
         name="harga"
         label="Harga"
@@ -237,7 +275,7 @@ export function FilterPanel({ query, brand, price, facets, onChange, idPrefix }:
           const value = current && current !== true && !Array.isArray(current) ? current : null;
           return (
             <RangeFields
-              key={`${facet.key}-${rangeKey(value)}`}
+              key={facet.key}
               idPrefix={idPrefix}
               name={facet.key}
               label={facet.label}
