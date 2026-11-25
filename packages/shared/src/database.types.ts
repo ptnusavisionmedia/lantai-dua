@@ -271,6 +271,13 @@ export type Database = {
             referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "demo_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_availability"
+            referencedColumns: ["id"]
+          },
         ]
       }
       opening_hours: {
@@ -324,6 +331,13 @@ export type Database = {
             foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
@@ -332,6 +346,13 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_availability"
             referencedColumns: ["id"]
           },
         ]
@@ -377,6 +398,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
@@ -544,7 +572,104 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      catalog_items: {
+        Row: {
+          brand_name: string | null
+          brand_slug: string | null
+          category_name: string | null
+          category_slug: string | null
+          created_at: string | null
+          demo_status: string | null
+          demo_variant_name: string | null
+          demo_variant_sku: string | null
+          group_name: string | null
+          group_slug: string | null
+          group_sort_order: number | null
+          id: string | null
+          image_path: string | null
+          model_name: string | null
+          price_max: number | null
+          price_min: number | null
+          slug: string | null
+          specs: Json | null
+          stock_total: number | null
+          try_mode: Database["public"]["Enums"]["try_mode"] | null
+          variant_attributes: Json | null
+        }
+        Relationships: []
+      }
+      counted_demo_units: {
+        Row: {
+          code: string | null
+          id: string | null
+          product_id: string | null
+          rank: number | null
+          status: Database["public"]["Enums"]["demo_unit_status"] | null
+          variant_id: string | null
+          variant_name: string | null
+          variant_sku: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_availability"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      variant_availability: {
+        Row: {
+          attributes: Json | null
+          demo_status: string | null
+          id: string | null
+          image_path: string | null
+          name: string | null
+          price_idr: number | null
+          product_id: string | null
+          sku: string | null
+          sort_order: number | null
+          stock_qty: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       current_app_role: {
