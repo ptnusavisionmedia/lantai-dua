@@ -4,7 +4,15 @@ import { ProductImage } from './product-image';
 import { StatusLine } from './status-line';
 
 /** Kartu produk: foto, merek, model, harga, lalu status stok jual dan demo dalam kata. */
-export function ProductCard({ item }: { item: CatalogItem }) {
+export function ProductCard({
+  item,
+  headingLevel = 'h2',
+}: {
+  item: CatalogItem;
+  /** Level judul nama model; 'h3' kalau kartu berada di bawah judul bagian h2. */
+  headingLevel?: 'h2' | 'h3';
+}) {
+  const Heading = headingLevel;
   const stock = stockLabel(item.stockTotal);
   const demo = demoLabel(item.demoStatus, item.demoVariantName);
   return (
@@ -20,9 +28,9 @@ export function ProductCard({ item }: { item: CatalogItem }) {
       />
       <div className="flex flex-1 flex-col gap-1 p-4">
         <p className="text-xs font-medium text-ink-muted">{item.brandName}</p>
-        <h2 className="font-display text-lg leading-snug font-semibold text-ink group-hover:text-primary">
+        <Heading className="font-display text-lg leading-snug font-semibold text-ink group-hover:text-primary">
           {item.modelName}
-        </h2>
+        </Heading>
         <p className="font-display text-base font-semibold tabular-nums">
           {priceLabel(item.priceMin, item.priceMax)}
         </p>
