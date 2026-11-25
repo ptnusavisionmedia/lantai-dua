@@ -16,6 +16,10 @@ describe('format', () => {
     expect(formatDimensions({ length_mm: 124.5, width_mm: 64, height_mm: 38 })).toBe(
       '124,5 × 64 × 38 mm',
     );
+    // Dua desimal seperti di halaman resmi (VortexSeries Ignix F1).
+    expect(formatDimensions({ length_mm: 121.48, width_mm: 61.27, height_mm: 38.2 })).toBe(
+      '121,48 × 61,27 × 38,2 mm',
+    );
     expect(formatDimensions({ length_mm: 124 })).toBeNull();
   });
 });

@@ -3,7 +3,9 @@ import {
   type CatalogItem,
   fromAttributeRow,
   fromCatalogRow,
+  fromVariantRow,
   type TryMode,
+  type VariantAvailability,
 } from '@lantai-dua/shared/catalog';
 import { cache } from 'react';
 import { createServerSupabase } from './supabase/server';
@@ -81,5 +83,68 @@ export const getCategory = cache(async (slug: string): Promise<CategoryDetail | 
     attributes: data.category_attributes
       .map(fromAttributeRow)
       .sort((a, b) => a.sortOrder - b.sortOrder),
+  };
+});
+
+/** Nama area bebas coba yang aktif (sort_order terkecil), misalnya "Meja Permukaan". */
+export const getFreeAreaName = cache(async (): Promise<string | null> => {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('demo_areas')
+    .select('name')
+    .eq('kind', 'free')
+    .eq('is_active', true)
+    .order('sort_order')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Area showroom gagal dimuat: ${error.message}`);
+  return data?.name ?? null;
+});
+
+export type ProductPage = {
+  item: CatalogItem;
+  description: string;
+  eloshapesUrl: string | null;
+  attributes: AttributeDef[];
+  variants: VariantAvailability[];
+  hygieneNote: string | null;
+  freeAreaName: string | null;
+};
+
+/**
+ * Data halaman detail. Hanya produk yang tampil di katalog (aktif, dijual, kategori aktif,
+ * punya varian aktif) yang punya halaman; selain itu null dan halaman menjadi 404.
+ */
+export const getProductPage = cache(async (slug: string): Promise<ProductPage | null> => {
+  if (!SLUG.test(slug)) return null;
+  const supabase = await createServerSupabase();
+  const { data: row, error } = await supabase
+    .from('catalog_items')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) throw new Error(`Produk gagal dimuat: ${error.message}`);
+  if (!row) return null;
+  const item = fromCatalogRow(row);
+
+  const [product, variants, category, freeAreaName] = await Promise.all([
+    supabase.from('products').select('description, eloshapes_url').eq('id', item.id).single(),
+    supabase.from('variant_availability').select('*').eq('product_id', item.id),
+    getCategory(item.categorySlug),
+    item.tryMode === 'free' ? getFreeAreaName() : Promise.resolve(null),
+  ]);
+  if (product.error) throw new Error(`Produk gagal dimuat: ${product.error.message}`);
+  if (variants.error) throw new Error(`Varian gagal dimuat: ${variants.error.message}`);
+
+  return {
+    item,
+    description: product.data.description,
+    eloshapesUrl: product.data.eloshapes_url,
+    attributes: category?.attributes ?? [],
+    variants: variants.data
+      .map(fromVariantRow)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.sku.localeCompare(b.sku)),
+    hygieneNote: category?.hygieneNote ?? null,
+    freeAreaName,
   };
 });

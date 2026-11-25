@@ -9,7 +9,10 @@ export default async function AkunLayout({ children }: { children: ReactNode }) 
     <DashboardShell
       roleLabel={ROLE_LABEL.customer}
       userName={me.fullName}
-      nav={[{ href: '/akun', label: 'Ringkasan' }]}
+      nav={[
+        { href: '/akun', label: 'Ringkasan' },
+        { href: '/akun/wishlist', label: 'Wishlist' },
+      ]}
     >
       {children}
     </DashboardShell>

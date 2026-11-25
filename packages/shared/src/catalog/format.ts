@@ -1,5 +1,5 @@
 const rupiah = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
-const decimal = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+const decimal = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
 
 /** `1249000` → `Rp1.249.000`. */
 export function formatRupiah(n: number): string {
