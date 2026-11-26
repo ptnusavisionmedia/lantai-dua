@@ -23,7 +23,8 @@ for (const [name, path] of [
   test(`nav link ${name} opens ${path}`, async ({ page }) => {
     await page.goto('/');
     await page.getByRole('navigation', { name: 'Utama' }).getByRole('link', { name }).click();
-    await expect(page).toHaveURL(path);
+    // Bandingkan menulis pasangan yang tampil ke URL (desain 1B §5.3), jadi yang dicek path-nya.
+    await expect(page).toHaveURL((url) => url.pathname === path);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
 }
