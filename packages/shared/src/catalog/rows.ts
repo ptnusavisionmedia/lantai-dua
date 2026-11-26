@@ -9,7 +9,7 @@ const DEMO_STATUSES: readonly string[] = ['free', 'available', 'in_use', 'servic
 
 // Tipe hasil generate untuk view membuat semua kolom nullable dan demo_status bertipe string,
 // jadi nilainya dipersempit di sini. Nilai yang tidak dikenal jatuh ke pilihan paling aman.
-function toDemoStatus(value: string | null): DemoStatus {
+export function toDemoStatus(value: string | null): DemoStatus {
   return value !== null && DEMO_STATUSES.includes(value) ? (value as DemoStatus) : 'none';
 }
 
@@ -21,7 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function toRecord(value: Json | null): Record<string, unknown> {
+export function toRecord(value: Json | null): Record<string, unknown> {
   return isRecord(value) ? value : {};
 }
 

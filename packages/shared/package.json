@@ -7,7 +7,8 @@
     "./roles": "./src/roles.ts",
     "./access": "./src/access.ts",
     "./database": "./src/database.types.ts",
-    "./catalog": "./src/catalog/index.ts"
+    "./catalog": "./src/catalog/index.ts",
+    "./compare": "./src/compare/index.ts"
   },
   "scripts": {
     "test": "vitest run",
