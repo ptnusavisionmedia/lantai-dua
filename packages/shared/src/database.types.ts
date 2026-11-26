@@ -338,6 +338,13 @@ export type Database = {
             foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "compare_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
@@ -403,6 +410,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "compare_items"
             referencedColumns: ["id"]
           },
           {
@@ -532,6 +546,8 @@ export type Database = {
         Row: {
           address: string
           cancel_cutoff_minutes: number
+          compare_example_current_id: string | null
+          compare_example_target_id: string | null
           id: boolean
           maps_url: string | null
           max_active_reservations: number
@@ -545,6 +561,8 @@ export type Database = {
         Insert: {
           address: string
           cancel_cutoff_minutes?: number
+          compare_example_current_id?: string | null
+          compare_example_target_id?: string | null
           id?: boolean
           maps_url?: string | null
           max_active_reservations?: number
@@ -558,6 +576,8 @@ export type Database = {
         Update: {
           address?: string
           cancel_cutoff_minutes?: number
+          compare_example_current_id?: string | null
+          compare_example_target_id?: string | null
           id?: boolean
           maps_url?: string | null
           max_active_reservations?: number
@@ -568,7 +588,50 @@ export type Database = {
           updated_at?: string
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "store_settings_compare_example_current_id_fkey"
+            columns: ["compare_example_current_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_settings_compare_example_current_id_fkey"
+            columns: ["compare_example_current_id"]
+            isOneToOne: false
+            referencedRelation: "compare_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_settings_compare_example_current_id_fkey"
+            columns: ["compare_example_current_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_settings_compare_example_target_id_fkey"
+            columns: ["compare_example_target_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_settings_compare_example_target_id_fkey"
+            columns: ["compare_example_target_id"]
+            isOneToOne: false
+            referencedRelation: "compare_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_settings_compare_example_target_id_fkey"
+            columns: ["compare_example_target_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -595,6 +658,25 @@ export type Database = {
           stock_total: number | null
           try_mode: Database["public"]["Enums"]["try_mode"] | null
           variant_attributes: Json | null
+        }
+        Relationships: []
+      }
+      compare_items: {
+        Row: {
+          brand_name: string | null
+          brand_slug: string | null
+          category_slug: string | null
+          demo_status: string | null
+          demo_variant_name: string | null
+          demo_variant_sku: string | null
+          eloshapes_url: string | null
+          id: string | null
+          is_for_sale: boolean | null
+          model_name: string | null
+          price_max: number | null
+          price_min: number | null
+          slug: string | null
+          specs: Json | null
         }
         Relationships: []
       }
@@ -635,6 +717,13 @@ export type Database = {
             foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "compare_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
@@ -659,6 +748,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "compare_items"
             referencedColumns: ["id"]
           },
           {
