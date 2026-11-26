@@ -88,3 +88,16 @@ test('a logged-in customer goes straight to the reservation form', async ({ page
     /^\/reservasi\/baru\?varian=/,
   );
 });
+
+test('home offers the saved manual sizes', async ({ page }) => {
+  // Gear pelanggan2 berupa ukuran manual dari tes 'a customer saves manual sizes'.
+  await login(page, CUSTOMER, '/');
+  const section = page.getByRole('region', { name: 'Bandingkan mouse' });
+  await expect(section.getByLabel('Mouse gue sekarang').locator('option:checked')).toHaveText(
+    'Ukuran yang lu simpan',
+  );
+  await expect(section.getByRole('link', { name: 'Buka perbandingan lengkap' })).toHaveAttribute(
+    'href',
+    `/bandingkan?sekarang=ukur&panjang=125&bobot=60&incaran=${compareExample.targetSlug}`,
+  );
+});

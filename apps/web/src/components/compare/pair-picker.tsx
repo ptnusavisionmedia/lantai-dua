@@ -66,43 +66,45 @@ export function PairPicker({
   );
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="min-w-0">
-        <label htmlFor={`${id}-sekarang`} className={LABEL}>
-          Mouse gue sekarang
-        </label>
-        <select
-          id={`${id}-sekarang`}
-          className={SELECT}
-          value={currentValue(pair.current, allowManual)}
-          onChange={(e) => changeCurrent(e.target.value)}
-        >
-          <option value="" disabled>
-            Pilih mouse yang lu pakai sekarang
-          </option>
-          {forSale.length > 0 && (
-            <optgroup label="Dijual di LANTAI DUA">{forSale.map(option)}</optgroup>
-          )}
-          {others.length > 0 && <optgroup label="Mouse lain">{others.map(option)}</optgroup>}
-          {savedManual && <option value={SAVED}>Ukuran yang lu simpan</option>}
-          {allowManual && <option value={MANUAL_SLUG}>Isi ukuran sendiri</option>}
-        </select>
-      </div>
-      <div className="min-w-0">
-        <label htmlFor={`${id}-incaran`} className={LABEL}>
-          Mouse incaran
-        </label>
-        <select
-          id={`${id}-incaran`}
-          className={SELECT}
-          value={pair.target?.slug ?? ''}
-          onChange={(e) => changeTarget(e.target.value)}
-        >
-          <option value="" disabled>
-            Pilih mouse incaran
-          </option>
-          {forSale.map(option)}
-        </select>
+    <div className="@container">
+      <div className="grid gap-4 @lg:grid-cols-2">
+        <div className="min-w-0">
+          <label htmlFor={`${id}-sekarang`} className={LABEL}>
+            Mouse gue sekarang
+          </label>
+          <select
+            id={`${id}-sekarang`}
+            className={SELECT}
+            value={currentValue(pair.current, allowManual)}
+            onChange={(e) => changeCurrent(e.target.value)}
+          >
+            <option value="" disabled>
+              Pilih mouse yang lu pakai sekarang
+            </option>
+            {forSale.length > 0 && (
+              <optgroup label="Dijual di LANTAI DUA">{forSale.map(option)}</optgroup>
+            )}
+            {others.length > 0 && <optgroup label="Mouse lain">{others.map(option)}</optgroup>}
+            {savedManual && <option value={SAVED}>Ukuran yang lu simpan</option>}
+            {allowManual && <option value={MANUAL_SLUG}>Isi ukuran sendiri</option>}
+          </select>
+        </div>
+        <div className="min-w-0">
+          <label htmlFor={`${id}-incaran`} className={LABEL}>
+            Mouse incaran
+          </label>
+          <select
+            id={`${id}-incaran`}
+            className={SELECT}
+            value={pair.target?.slug ?? ''}
+            onChange={(e) => changeTarget(e.target.value)}
+          >
+            <option value="" disabled>
+              Pilih mouse incaran
+            </option>
+            {forSale.map(option)}
+          </select>
+        </div>
       </div>
     </div>
   );

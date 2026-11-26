@@ -1,10 +1,12 @@
 import { ButtonLink } from '@/components/button';
+import { CompareTeaser } from '@/components/home/compare-teaser';
 import { DemoRow } from '@/components/home/demo-row';
 import { RackDoors } from '@/components/home/rack-doors';
 import { listCatalogItems } from '@/lib/catalog-data';
+import { loadComparePage } from '@/lib/compare-data';
 
 export default async function HomePage() {
-  const items = await listCatalogItems();
+  const [items, compare] = await Promise.all([listCatalogItems(), loadComparePage()]);
   return (
     <>
       <section className="mx-auto max-w-[1200px] px-4 pt-14 pb-12 md:px-8 md:pt-24">
@@ -26,6 +28,9 @@ export default async function HomePage() {
         </div>
       </section>
       <DemoRow items={items} />
+      {compare && (
+        <CompareTeaser items={compare.items} examples={compare.examples} gear={compare.gear} />
+      )}
       <RackDoors items={items} />
     </>
   );

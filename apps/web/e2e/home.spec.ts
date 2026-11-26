@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allProducts } from './data';
+import { allProducts, compareExample, fullName } from './data';
 
 const RACKS = [
   ['Kontrol', 'kontrol', ['mouse', 'keyboard']],
@@ -50,4 +50,25 @@ test('rack door opens the filtered catalog', async ({ page }) => {
     .click();
   await expect(page).toHaveURL('/katalog?rak=audio');
   await expect(page.getByTestId('product-card')).toHaveCount(inCategories(['headset']));
+});
+
+test('home compares the example pair and opens the full page', async ({ page }) => {
+  await page.goto('/');
+  const section = page.getByRole('region', { name: 'Bandingkan mouse' });
+  await expect(section.getByLabel('Mouse gue sekarang').locator('option:checked')).toHaveText(
+    fullName(compareExample.currentSlug),
+  );
+  await expect(section.getByLabel('Mouse gue sekarang').locator('option')).not.toContainText([
+    'Isi ukuran sendiri',
+  ]);
+  await expect(section.getByRole('img')).toHaveCount(1);
+  await expect(section.getByTestId('compare-summary')).toHaveText(/^Incaran /);
+  await section
+    .getByLabel('Mouse incaran')
+    .selectOption({ label: fullName('razer-deathadder-v3-pro') });
+  await expect(page).toHaveURL('/');
+  await section.getByRole('link', { name: 'Buka perbandingan lengkap' }).click();
+  await expect(page).toHaveURL(
+    `/bandingkan?sekarang=${compareExample.currentSlug}&incaran=razer-deathadder-v3-pro`,
+  );
 });
