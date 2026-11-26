@@ -633,6 +633,62 @@ export type Database = {
           },
         ]
       }
+      user_gear: {
+        Row: {
+          category_id: string
+          id: string
+          manual_specs: Json | null
+          product_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          manual_specs?: Json | null
+          product_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          manual_specs?: Json | null
+          product_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_gear_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_gear_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_gear_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "compare_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_gear_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       catalog_items: {
@@ -775,6 +831,10 @@ export type Database = {
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       revalidate_category_values: {
+        Args: { p_category_id: string }
+        Returns: undefined
+      }
+      revalidate_gear_values: {
         Args: { p_category_id: string }
         Returns: undefined
       }
