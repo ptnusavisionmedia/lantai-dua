@@ -186,7 +186,9 @@ describe('seedCatalog', () => {
     expect(
       await one(anonClient().from('compare_items').select('is_for_sale').eq('slug', refSlug)),
     ).toEqual([{ is_for_sale: false }]);
-    const ref = await one(admin.from('products').select('id').eq('slug', refSlug).single());
+    const ref = (await one(admin.from('products').select('id').eq('slug', refSlug).single())) as {
+      id: string;
+    } | null;
     expect(
       await one(
         admin
@@ -199,8 +201,10 @@ describe('seedCatalog', () => {
 
   it('keeps is_for_sale when re-run, and restores it from data only when forced', async () => {
     const admin = adminClient();
-    const forSale = async (s: string) =>
-      (await one(admin.from('products').select('is_for_sale').eq('slug', s).single()))?.is_for_sale;
+    const forSale = async (s: string) => {
+      const row = await one(admin.from('products').select('is_for_sale').eq('slug', s).single());
+      return (row as { is_for_sale: boolean } | null)?.is_for_sale;
+    };
     await one(admin.from('products').update({ is_for_sale: true }).eq('slug', refSlug));
     await one(admin.from('products').update({ is_for_sale: false }).eq('slug', slug));
 
