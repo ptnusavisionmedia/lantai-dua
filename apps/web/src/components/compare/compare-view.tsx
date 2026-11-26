@@ -20,6 +20,7 @@ import { CompareTable } from './compare-table';
 import { DemoPanel } from './demo-panel';
 import { ManualFields } from './manual-fields';
 import { PairPicker } from './pair-picker';
+import { SaveGear } from './save-gear';
 import { SizeBoxes } from './size-boxes';
 
 const BASE_PATH = '/bandingkan';
@@ -60,6 +61,8 @@ export function CompareView({ items, attributes, examples, gear, viewer }: Compa
   }
   const pair = pending ?? fromUrl;
   const query = serializeCompareQuery(pair);
+  // Gear terakhir yang tersimpan, supaya teks "Tersimpan" langsung tampil tanpa memuat ulang.
+  const [savedGear, setSavedGear] = useState(gear);
 
   // URL selalu mencerminkan pasangan yang tampil, termasuk yang terisi dari gear atau contoh.
   useEffect(() => {
@@ -91,6 +94,13 @@ export function CompareView({ items, attributes, examples, gear, viewer }: Compa
             onCommit={(specs) => update({ ...pair, current: { kind: 'manual', specs } })}
           />
         )}
+        <SaveGear
+          slot={pair.current}
+          gear={savedGear}
+          viewer={viewer}
+          pageUrl={`${BASE_PATH}${query}`}
+          onSaved={setSavedGear}
+        />
       </div>
 
       <p
