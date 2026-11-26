@@ -95,7 +95,7 @@ function Panel({
       viewBox={`0 0 ${width + EXTRA} ${height + EXTRA}`}
       role="img"
       aria-label={label}
-      className="mt-2 block h-auto w-full overflow-visible rounded-md bg-surface-sunken"
+      className="mt-2 block h-auto w-full overflow-hidden rounded-md bg-surface-sunken"
     >
       <g key={animKey}>
         {view === 'side' && (
