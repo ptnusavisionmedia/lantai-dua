@@ -173,7 +173,7 @@ export function SizeBoxes({ pair, views }: { pair: ComparePair; views: View[] })
     panel: view === 'top' ? panels.top : panels.side,
     gap: view === 'top' ? panels.topGap : panels.sideGap,
   }));
-  const describe = (view: View, p: BoxPanel) => {
+  const panelLabel = (view: View, p: BoxPanel) => {
     const second = view === 'top' ? 'lebar' : 'tinggi';
     const dims = (w: number, h: number) => `${number.format(w)} × ${number.format(h)} mm`;
     return `${CAPTION[view]}. Panjang × ${second}: ${currentName} ${dims(p.current.w, p.current.h)}, ${targetName} ${dims(p.target.w, p.target.h)}.`;
@@ -186,7 +186,7 @@ export function SizeBoxes({ pair, views }: { pair: ComparePair; views: View[] })
           <div key={view} className="min-w-0">
             <p className="text-[13px] font-medium text-ink-muted">{CAPTION[view]}</p>
             {panel ? (
-              <Panel view={view} panel={panel} label={describe(view, panel)} animKey={animKey} />
+              <Panel view={view} panel={panel} label={panelLabel(view, panel)} animKey={animKey} />
             ) : (
               <p className="mt-2 rounded-md bg-surface-sunken px-4 py-6 text-sm text-ink-muted">
                 {gap}
