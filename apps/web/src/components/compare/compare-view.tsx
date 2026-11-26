@@ -20,6 +20,7 @@ import { CompareTable } from './compare-table';
 import { DemoPanel } from './demo-panel';
 import { ManualFields } from './manual-fields';
 import { PairPicker } from './pair-picker';
+import { SizeBoxes } from './size-boxes';
 
 const BASE_PATH = '/bandingkan';
 
@@ -100,6 +101,7 @@ export function CompareView({ items, attributes, examples, gear, viewer }: Compa
         {text}
       </p>
 
+      <SizeBoxes pair={pair} views={['top', 'side']} />
       {rows.length > 0 && <CompareTable rows={rows} />}
       <DemoPanel pair={pair} viewer={viewer} />
     </div>

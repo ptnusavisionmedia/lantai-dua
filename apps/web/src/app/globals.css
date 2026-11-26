@@ -44,3 +44,48 @@
     animation: none;
   }
 }
+
+/*
+ * M1 di Bandingkan: kotak mouse sekarang masuk dari kiri, kotak incaran dari kanan, lalu
+ * menumpuk dalam dur-showcase. Garis ukur muncul setelahnya dengan fade dur-fast.
+ * Dalam mode kurangi gerakan, dur-showcase bernilai 0 ms, jadi kotak langsung menumpuk.
+ */
+@keyframes m1-from-left {
+  from {
+    transform: translateX(-50%);
+    opacity: 0;
+  }
+}
+
+@keyframes m1-from-right {
+  from {
+    transform: translateX(50%);
+    opacity: 0;
+  }
+}
+
+@keyframes m1-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.m1-current,
+.m1-target {
+  transform-box: view-box;
+  animation-duration: var(--dur-showcase);
+  animation-timing-function: var(--ease-out);
+  animation-fill-mode: both;
+}
+
+.m1-current {
+  animation-name: m1-from-left;
+}
+
+.m1-target {
+  animation-name: m1-from-right;
+}
+
+.m1-after {
+  animation: m1-fade var(--dur-fast) linear var(--dur-showcase) both;
+}

@@ -124,3 +124,49 @@ test('reference mice have no product page', async ({ page }) => {
   expect(slug).toBeDefined();
   expect((await page.goto(`/produk/${slug}`))?.status()).toBe(404);
 });
+
+test('draws both views on one scale with the disclaimer', async ({ page }) => {
+  await page.goto(`/bandingkan?sekarang=${ex1}&incaran=${ex2}`);
+  const fig = page.getByTestId('size-boxes');
+  await expect(fig.getByRole('img')).toHaveCount(2);
+  await expect(fig.getByText('Tampak atas · skala sama')).toBeVisible();
+  await expect(fig.getByText('Tampak samping · skala sama')).toBeVisible();
+  await expect(fig.getByText('Ukuran luar, bukan bentuk asli.')).toBeVisible();
+  const widths = await fig
+    .locator('svg')
+    .evaluateAll((svgs) => svgs.map((s) => s.getAttribute('viewBox')?.split(' ')[2]));
+  expect(widths).toHaveLength(2);
+  expect(widths[0]).toBe(widths[1]);
+});
+
+test('replaces a panel with a note when sizes are missing', async ({ page }) => {
+  await page.goto('/bandingkan?sekarang=ukur&panjang=125&incaran=vortexseries-ignix-f1');
+  await expect(page.getByText('Isi lebar mouse lu untuk melihat tampak atas.')).toBeVisible();
+  await expect(page.getByTestId('size-boxes').getByRole('img')).toHaveCount(0);
+});
+
+test('replays M1 and stacks instantly with reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`/bandingkan?sekarang=${ex1}&incaran=${ex2}`);
+  const box = page.locator('.m1-target').first();
+  expect(await box.evaluate((e) => getComputedStyle(e).animationDuration)).toBe('0s');
+  const fig = page.getByTestId('size-boxes');
+  await expect(fig).toHaveAttribute('data-play', '0');
+  await page.getByRole('button', { name: 'Putar ulang' }).click();
+  await expect(fig).toHaveAttribute('data-play', '1');
+});
+
+test('animates M1 in showcase time without reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(`/bandingkan?sekarang=${ex1}&incaran=${ex2}`);
+  const box = page.locator('.m1-target').first();
+  expect(await box.evaluate((e) => getComputedStyle(e).animationName)).toBe('m1-from-right');
+  expect(await box.evaluate((e) => getComputedStyle(e).animationDuration)).toBe('0.64s');
+});
+
+test('fits a 360 px screen without horizontal scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/bandingkan?sekarang=vortexseries-ignix-r1-pro&incaran=razer-deathadder-v3-pro');
+  await expect(page.getByTestId('size-boxes')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
