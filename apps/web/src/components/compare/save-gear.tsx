@@ -6,6 +6,8 @@ import { type SaveGearInput, saveMouseGear } from '@/app/(public)/bandingkan/act
 import type { CompareViewer } from '@/lib/compare-data';
 import { Button, ButtonLink } from '../button';
 
+const SAVE_FAILED = 'Gagal menyimpan. Coba lagi sebentar.';
+
 /**
  * Tombol "Simpan sebagai mouse gue" (desain §5.8). Tamu diarahkan ke login lalu kembali ke
  * pasangan yang sama, tanpa simpan otomatis. Staf dan akun nonaktif tidak melihatnya.
@@ -50,9 +52,15 @@ export function SaveGear({
         : { kind: 'manual', specs: slot.specs };
     setError(null);
     startTransition(async () => {
-      const result = await saveMouseGear(input);
-      if (result.ok) onSaved(result.gear);
-      else setError(result.error);
+      // Galat di dalam transisi akan naik ke error boundary dan mengganti seluruh halaman,
+      // jadi kegagalan jaringan ditangkap di sini dan ditampilkan di dekat tombol (desain §5.8).
+      try {
+        const result = await saveMouseGear(input);
+        if (result.ok) onSaved(result.gear);
+        else setError(result.error);
+      } catch {
+        setError(SAVE_FAILED);
+      }
     });
   };
 

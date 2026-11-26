@@ -101,3 +101,19 @@ test('home offers the saved manual sizes', async ({ page }) => {
     `/bandingkan?sekarang=ukur&panjang=125&bobot=60&incaran=${compareExample.targetSlug}`,
   );
 });
+
+test('a failed save keeps the page and shows a message near the button', async ({ page }) => {
+  const pairUrl = '/bandingkan?sekarang=razer-viper-mini&incaran=vortexseries-ignix-f1';
+  await login(page, CUSTOMER, pairUrl);
+  await expect(page).toHaveURL(pairUrl);
+  // Permintaan Server Action (POST ke halaman ini) diputus, seperti koneksi HP yang hilang.
+  await page.route('**/bandingkan**', (route) =>
+    route.request().method() === 'POST' ? route.abort() : route.continue(),
+  );
+  await page.getByRole('button', { name: 'Simpan sebagai mouse gue' }).click();
+  await expect(page.getByText('Gagal menyimpan. Coba lagi sebentar.')).toBeVisible();
+  await expect(page.getByLabel('Mouse gue sekarang').locator('option:checked')).toHaveText(
+    'Razer Viper Mini',
+  );
+  await expect(page.getByRole('button', { name: 'Simpan sebagai mouse gue' })).toBeVisible();
+});
