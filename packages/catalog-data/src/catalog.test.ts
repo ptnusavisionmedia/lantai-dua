@@ -227,6 +227,11 @@ describe('catalog seed: identity', () => {
 });
 
 describe('catalog seed: references', () => {
+  it('has about twenty reference mice, including the example', () => {
+    expect(references.length).toBeGreaterThanOrEqual(18);
+    expect(references.some((r) => r.slug === compareExample?.currentSlug)).toBe(true);
+  });
+
   it('gives every reference mouse four official sizes', () => {
     for (const r of references) {
       expect(r.categorySlug, r.slug).toBe('mouse');

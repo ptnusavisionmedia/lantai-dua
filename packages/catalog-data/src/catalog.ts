@@ -705,41 +705,230 @@ const products: SeedProduct[] = [
  * Keempat ukuran wajib disalin dari halaman resmi pabrikan yang dibuka saat itu. Atribut lain
  * hanya diisi kalau tertulis di sumber yang sama.
  */
+function reference(r: {
+  slug: string;
+  brandSlug: string;
+  modelName: string;
+  /** Panjang, lebar, tinggi (mm), dan bobot (g), persis seperti di sumber resmi. */
+  size: [number, number, number, number];
+  extra?: Record<string, unknown>;
+  url: string;
+}): SeedReference {
+  const [length_mm, width_mm, height_mm, weight_g] = r.size;
+  const specs = { length_mm, width_mm, height_mm, weight_g, ...r.extra };
+  return {
+    slug: r.slug,
+    brandSlug: r.brandSlug,
+    categorySlug: 'mouse',
+    modelName: r.modelName,
+    specs,
+    specSources: sources(Object.keys(specs)),
+    specSourceUrl: r.url,
+    eloshapesUrl: null,
+  };
+}
+
+const WIRED = ['Kabel'];
+const TRI = ['Kabel', 'Wireless 2.4 GHz', 'Bluetooth'];
+
+// Koneksi, sensor, dan bentuk hanya diisi kalau tertulis jelas di sumber yang sama dengan ukurannya.
+// Lebar dan tinggi yang diberikan per bagian (depan/belakang) memakai nilai terbesar.
 const references: SeedReference[] = [
-  {
+  // Halaman resmi menulis Length 116,6 mm, Width 62,1 mm, Height 38,2 mm, Weight 85 g, "Wired Gaming Mouse".
+  reference({
     slug: 'logitech-g102-lightsync',
     brandSlug: 'logitech',
-    categorySlug: 'mouse',
     modelName: 'G102 Lightsync',
-    // Halaman resmi menulis Length 116,6 mm, Width 62,1 mm, Height 38,2 mm, Weight 85 g, dan "Wired Gaming Mouse".
-    specs: {
-      length_mm: 116.6,
-      width_mm: 62.1,
-      height_mm: 38.2,
-      weight_g: 85,
-      connectivity: ['Kabel'],
-    },
-    specSources: sources(['length_mm', 'width_mm', 'height_mm', 'weight_g', 'connectivity']),
-    specSourceUrl:
-      'https://www.logitechg.com/en-my/shop/p/g102-lightsync-rgb-gaming-mouse.910-005802',
-    eloshapesUrl: null,
-  },
+    size: [116.6, 62.1, 38.2, 85],
+    extra: { connectivity: WIRED },
+    url: 'https://www.logitechg.com/en-my/shop/p/g102-lightsync-rgb-gaming-mouse.910-005802',
+  }),
+  // Halaman dukungan menulis Height 116,6 mm (panjang) dan Depth 38,2 mm (tinggi). Bobot dengan 1 baterai AA.
+  reference({
+    slug: 'logitech-g304-lightspeed',
+    brandSlug: 'logitech',
+    modelName: 'G304 Lightspeed',
+    size: [116.6, 62.15, 38.2, 99],
+    extra: { connectivity: ['Wireless 2.4 GHz'], sensor: 'HERO' },
+    url: 'https://support.logi.com/hc/en-gb/articles/360023303474-G304-LIGHTSPEED-Wireless-Gaming-Mouse-Technical-Specifications',
+  }),
+  reference({
+    slug: 'logitech-g502-x',
+    brandSlug: 'logitech',
+    modelName: 'G502 X',
+    size: [131.4, 79.2, 41.1, 89],
+    extra: { connectivity: WIRED, sensor: 'HERO 25K' },
+    url: 'https://www.logitechg.com/en-us/shop/p/g502-x-wired-lightforce',
+  }),
+  // Koneksi dikosongkan: halaman hanya menulis "LIGHTSPEED Wireless", tanpa frekuensi.
+  reference({
+    slug: 'logitech-g-pro-wireless',
+    brandSlug: 'logitech',
+    modelName: 'G Pro Wireless',
+    size: [125, 63.5, 40, 80],
+    extra: { sensor: 'HERO 25K', shape: 'Simetris' },
+    url: 'https://www.logitechg.com/en-us/shop/p/pro-wireless-mouse.910-005270',
+  }),
+  // Koneksi dikosongkan dengan alasan yang sama ("HyperSpeed Wireless"). Bobot edisi hitam.
+  reference({
+    slug: 'razer-viper-v3-pro',
+    brandSlug: 'razer',
+    modelName: 'Viper V3 Pro',
+    size: [127.1, 63.9, 39.9, 54],
+    extra: { sensor: 'Focus Pro 35K Optical Sensor Gen-2', shape: 'Simetris' },
+    url: 'https://www.razer.com/gaming-mice/razer-viper-v3-pro/RZ01-05120100-R3U1',
+  }),
+  reference({
+    slug: 'razer-deathadder-essential',
+    brandSlug: 'razer',
+    modelName: 'DeathAdder Essential',
+    size: [127.3, 72.7, 42.8, 96],
+    extra: { connectivity: WIRED, shape: 'Ergonomis kanan' },
+    url: 'https://www.razer.com/gaming-mice/razer-deathadder-essential/RZ01-03850100-R3U1',
+  }),
+  reference({
+    slug: 'razer-basilisk-v3',
+    brandSlug: 'razer',
+    modelName: 'Basilisk V3',
+    size: [130, 75, 42.5, 101],
+    extra: { connectivity: WIRED, shape: 'Ergonomis kanan' },
+    url: 'https://www.razer.com/gaming-mice/razer-basilisk-v3/RZ01-04000100-R3U1',
+  }),
+  reference({
+    slug: 'razer-viper-mini',
+    brandSlug: 'razer',
+    modelName: 'Viper Mini',
+    size: [118.3, 53.5, 38.3, 61],
+    extra: { connectivity: WIRED, shape: 'Simetris' },
+    url: 'https://www.razer.com/mena-en/gaming-mice/razer-viper-mini',
+  }),
+  // Ukuran dari diagram ukur resmi Zowie.
+  reference({
+    slug: 'zowie-ec2-cw',
+    brandSlug: 'zowie',
+    modelName: 'EC2-CW',
+    size: [123, 65, 42, 77],
+    extra: { connectivity: ['Wireless 2.4 GHz'], sensor: '3370' },
+    url: 'https://zowie.benq.eu/en-eu/mouse/ec2-cw.html',
+  }),
+  reference({
+    slug: 'zowie-fk2-c',
+    brandSlug: 'zowie',
+    modelName: 'FK2-C',
+    size: [125, 65, 36, 70],
+    extra: { connectivity: WIRED, sensor: '3360', shape: 'Simetris' },
+    url: 'https://zowie.benq.eu/en-eu/mouse/fk2-c.html',
+  }),
+  reference({
+    slug: 'zowie-s2-c',
+    brandSlug: 'zowie',
+    modelName: 'S2-C',
+    size: [120, 64, 38, 69],
+    extra: { connectivity: WIRED, sensor: '3360', shape: 'Simetris' },
+    url: 'https://zowie.benq.eu/en-eu/mouse/s2-c.html',
+  }),
+  // Ukuran Medium.
+  reference({
+    slug: 'pulsar-x2-v2',
+    brandSlug: 'pulsar',
+    modelName: 'X2 V2',
+    size: [120.4, 63, 38, 53],
+    extra: { connectivity: ['Kabel', 'Wireless 2.4 GHz'], sensor: 'PAW3395', shape: 'Simetris' },
+    url: 'https://www.pulsar.gg/products/x2v2-gaming-mouse',
+  }),
+  // Pengganti Atlantis Mini, yang menurut FAQ resmi Lamzu sudah tidak diproduksi.
+  reference({
+    slug: 'lamzu-atlantis-mini-pro',
+    brandSlug: 'lamzu',
+    modelName: 'Atlantis Mini Pro',
+    size: [117, 63, 37, 51],
+    url: 'https://lamzu.com/products/lamzu-atlantis-mini-pro-gaming-mouse',
+  }),
+  reference({
+    slug: 'vxe-dragonfly-r1',
+    brandSlug: 'vxe',
+    modelName: 'Dragonfly R1',
+    size: [120.6, 64.1, 37.6, 51],
+    extra: { connectivity: TRI, shape: 'Simetris' },
+    url: 'https://www.atk.store/products/vxe-dragonfly-r1-series-wireless-mouse',
+  }),
+  reference({
+    slug: 'attack-shark-x3',
+    brandSlug: 'attack-shark',
+    modelName: 'X3',
+    size: [118.5, 61, 39.7, 49],
+    extra: { connectivity: TRI, sensor: 'PAW3395', shape: 'Simetris' },
+    url: 'https://attackshark.com/products/attack-shark-x3-wireless-gaming-mouse-paw3395',
+  }),
+  // Bobot dengan penutup belakang berlubang.
+  reference({
+    slug: 'fantech-aria-xd7',
+    brandSlug: 'fantech',
+    modelName: 'Aria XD7',
+    size: [114, 65, 39, 59],
+    extra: { connectivity: TRI, sensor: 'PixArt 3395' },
+    url: 'https://fantechworld.com/products/aria-xd7',
+  }),
+  reference({
+    slug: 'rexus-daxa-air-iv-gen-2',
+    brandSlug: 'rexus',
+    modelName: 'Daxa Air IV Gen 2',
+    size: [124.96, 63.07, 39.63, 66],
+    extra: { connectivity: ['Wireless 2.4 GHz'], sensor: 'PAW3395' },
+    url: 'https://rexus.id/products/rexus-pro-mouse-wireless-gaming-daxa-air-iv-1',
+  }),
+  // Edisi 2022 kabel (halaman Aerox 3 lama diarahkan ke sini).
+  reference({
+    slug: 'steelseries-aerox-3',
+    brandSlug: 'steelseries',
+    modelName: 'Aerox 3',
+    size: [120.55, 67.03, 37.98, 59],
+    extra: { connectivity: WIRED, sensor: 'SteelSeries TrueMove Core', shape: 'Ergonomis kanan' },
+    url: 'https://steelseries.com/gaming-mice/aerox-3-2022?color=onyx&connectivityType=wired',
+  }),
+  // Situs resmi HP (pemilik HyperX). Tinggi tertulis 3,8 cm; bobot tanpa kabel.
+  reference({
+    slug: 'hyperx-pulsefire-haste-2',
+    brandSlug: 'hyperx',
+    modelName: 'Pulsefire Haste 2',
+    size: [124.3, 66.8, 38, 52],
+    extra: { connectivity: WIRED, sensor: 'HyperX 26K Sensor', shape: 'Simetris' },
+    url: 'https://www.hp.com/ie-en/products/accessories/product-details/product-specifications/2101391583',
+  }),
+  // Pengganti Model O: ukuran Model O asli tidak tercantum di sumber resmi Glorious.
+  reference({
+    slug: 'glorious-model-o-eternal',
+    brandSlug: 'glorious',
+    modelName: 'Model O Eternal',
+    size: [128, 67, 38, 55],
+    extra: { shape: 'Simetris' },
+    url: 'https://www.gloriousgaming.com/blogs/guides-resources/best-gaming-mouse-for-big-hands',
+  }),
 ];
 
 export const catalogSeed: CatalogSeed = {
   brands: [
     { slug: 'artisan', name: 'Artisan' },
+    { slug: 'attack-shark', name: 'Attack Shark' },
     { slug: 'dbe', name: 'dbE' },
+    { slug: 'fantech', name: 'Fantech' },
+    { slug: 'glorious', name: 'Glorious' },
     { slug: 'hyperx', name: 'HyperX' },
     { slug: 'keychron', name: 'Keychron' },
+    { slug: 'lamzu', name: 'Lamzu' },
     { slug: 'lastpad', name: 'Lastpad' },
     { slug: 'logitech', name: 'Logitech' },
     { slug: 'orbitkey', name: 'Orbitkey' },
     { slug: 'pressplay', name: 'Pressplay' },
+    { slug: 'pulsar', name: 'Pulsar' },
     { slug: 'razer', name: 'Razer' },
+    { slug: 'rexus', name: 'Rexus' },
     { slug: 'royal-kludge', name: 'Royal Kludge' },
     { slug: 'skypad', name: 'SkyPAD' },
+    { slug: 'steelseries', name: 'SteelSeries' },
     { slug: 'vortexseries', name: 'VortexSeries' },
+    { slug: 'vxe', name: 'VXE' },
+    { slug: 'zowie', name: 'Zowie' },
   ],
   products,
   references,
