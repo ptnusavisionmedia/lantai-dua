@@ -19,9 +19,12 @@ type FixtureOptions = {
   price?: number;
   stock?: number;
   unitStatus?: SeedDemoUnit['status'];
+  compareExample?: CatalogSeed['compareExample'];
 };
 
-/** 1 merek, 1 produk mouse, 2 varian (stok total 7), 1 unit demo. */
+const refSlug = `${prefix}ref`;
+
+/** 1 merek, 1 produk mouse, 2 varian (stok total 7), 1 unit demo, 1 mouse referensi. */
 function fixture(o: FixtureOptions = {}): CatalogSeed {
   return {
     brands: [{ slug: `${prefix}brand`, name: 'Merek seed tes' }],
@@ -58,6 +61,24 @@ function fixture(o: FixtureOptions = {}): CatalogSeed {
         demoUnits: [{ code, variantSku: sku1, status: o.unitStatus ?? 'available' }],
       },
     ],
+    references: [
+      {
+        slug: refSlug,
+        brandSlug: `${prefix}brand`,
+        categorySlug: 'mouse',
+        modelName: 'Referensi seed tes',
+        specs: { length_mm: 120, width_mm: 62, height_mm: 38, weight_g: 70 },
+        specSources: {
+          length_mm: 'resmi',
+          width_mm: 'resmi',
+          height_mm: 'resmi',
+          weight_g: 'resmi',
+        },
+        specSourceUrl: 'https://example.com/referensi',
+        eloshapesUrl: null,
+      },
+    ],
+    compareExample: o.compareExample ?? null,
   };
 }
 
@@ -71,7 +92,7 @@ afterAll(async () => {
   const admin = adminClient();
   // Unit dihapus duluan: FK unit → varian bersifat restrict.
   await admin.from('demo_units').delete().eq('code', code);
-  await admin.from('products').delete().eq('slug', slug);
+  await admin.from('products').delete().in('slug', [slug, refSlug]);
   await admin.from('brands').delete().like('slug', `${prefix}%`);
 });
 
@@ -86,6 +107,9 @@ describe('seedCatalog', () => {
       variantsUpdated: 0,
       unitsCreated: 1,
       unitsKept: 0,
+      referencesCreated: 1,
+      referencesUpdated: 0,
+      examplesSet: 0,
     });
     expect(
       await one(
@@ -155,6 +179,92 @@ describe('seedCatalog', () => {
       admin.from('demo_units').select('area:demo_areas(slug)').eq('code', code).single(),
     );
     expect(unit).toEqual({ area: { slug: 'meja-kontrol' } });
+  });
+
+  it('creates references as not for sale without variants', async () => {
+    const admin = adminClient();
+    expect(
+      await one(anonClient().from('compare_items').select('is_for_sale').eq('slug', refSlug)),
+    ).toEqual([{ is_for_sale: false }]);
+    const ref = await one(admin.from('products').select('id').eq('slug', refSlug).single());
+    expect(
+      await one(
+        admin
+          .from('product_variants')
+          .select('id')
+          .eq('product_id', ref?.id ?? ''),
+      ),
+    ).toEqual([]);
+  });
+
+  it('keeps is_for_sale when re-run, and restores it from data only when forced', async () => {
+    const admin = adminClient();
+    const forSale = async (s: string) =>
+      (await one(admin.from('products').select('is_for_sale').eq('slug', s).single()))?.is_for_sale;
+    await one(admin.from('products').update({ is_for_sale: true }).eq('slug', refSlug));
+    await one(admin.from('products').update({ is_for_sale: false }).eq('slug', slug));
+
+    const r = await seedCatalog(admin, fixture());
+    expect(r).toMatchObject({ referencesCreated: 0, referencesUpdated: 1 });
+    expect(await forSale(refSlug)).toBe(true);
+    expect(await forSale(slug)).toBe(false);
+
+    await seedCatalog(admin, fixture(), { forceBusiness: true });
+    expect(await forSale(refSlug)).toBe(false);
+    expect(await forSale(slug)).toBe(true);
+  });
+
+  it('fills the example pair only where it is empty', async () => {
+    const admin = adminClient();
+    const columns = 'compare_example_current_id, compare_example_target_id';
+    const original = await one(admin.from('store_settings').select(columns).single());
+    const ids = await one(admin.from('products').select('id, slug').in('slug', [slug, refSlug]));
+    const idOf = (s: string) => ids?.find((p) => p.slug === s)?.id;
+    const example = { currentSlug: refSlug, targetSlug: slug };
+    try {
+      await one(
+        admin
+          .from('store_settings')
+          .update({ compare_example_current_id: null, compare_example_target_id: null })
+          .eq('id', true),
+      );
+      const first = await seedCatalog(admin, fixture({ compareExample: example }));
+      expect(first.examplesSet).toBe(2);
+      expect(await one(admin.from('store_settings').select(columns).single())).toEqual({
+        compare_example_current_id: idOf(refSlug),
+        compare_example_target_id: idOf(slug),
+      });
+
+      // Pilihan pemilik tidak boleh tertimpa.
+      await one(
+        admin
+          .from('store_settings')
+          .update({ compare_example_current_id: idOf(slug) })
+          .eq('id', true),
+      );
+      const second = await seedCatalog(admin, fixture({ compareExample: example }));
+      expect(second.examplesSet).toBe(0);
+      expect(
+        await one(admin.from('store_settings').select('compare_example_current_id').single()),
+      ).toEqual({ compare_example_current_id: idOf(slug) });
+    } finally {
+      await one(
+        admin
+          .from('store_settings')
+          .update(original ?? {})
+          .eq('id', true),
+      );
+    }
+  });
+
+  it('has the real references seeded', async () => {
+    const slugs = catalogSeed.references.map((r) => r.slug);
+    expect(slugs.length).toBeGreaterThan(0);
+    const data = await one(
+      anonClient().from('compare_items').select('slug, is_for_sale').in('slug', slugs),
+    );
+    expect(data?.map((d) => d.slug).sort()).toEqual([...slugs].sort());
+    expect(data?.every((d) => d.is_for_sale === false)).toBe(true);
   });
 
   it('has the real catalog seeded', async () => {

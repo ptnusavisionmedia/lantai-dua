@@ -9,6 +9,10 @@ export type SeedReport = {
   variantsUpdated: number;
   unitsCreated: number;
   unitsKept: number;
+  referencesCreated: number;
+  referencesUpdated: number;
+  /** Jumlah kolom pasangan contoh di pengaturan toko yang ditulis (0–2). */
+  examplesSet: number;
 };
 
 type Response = { data: unknown; error: { message: string } | null };
@@ -36,9 +40,11 @@ const DEMO_AREA = 'meja-kontrol';
  *
  * - Kolom deskriptif (nama, merek, kategori, deskripsi, spek, atribut varian, URL sumber)
  *   selalu disamakan dengan data.
- * - Kolom bisnis (harga, stok, `is_active`, status unit demo) hanya diisi saat baris pertama
- *   kali dibuat, supaya perubahan dari operator dan pemilik tidak hilang.
- *   `forceBusiness: true` ikut menimpanya. Ini hanya untuk development.
+ * - Kolom bisnis (harga, stok, `is_active`, `is_for_sale`, status unit demo) hanya diisi saat
+ *   baris pertama kali dibuat, supaya perubahan dari operator dan pemilik tidak hilang.
+ *   `forceBusiness: true` ikut menimpanya dengan nilai dari data. Ini hanya untuk development.
+ * - Mouse referensi masuk sebagai produk tidak dijual, tanpa varian dan unit demo.
+ * - Pasangan contoh Bandingkan hanya ditulis ke kolom pengaturan toko yang masih kosong.
  * - Produk, varian, dan unit yang tidak ada di data tidak disentuh.
  */
 export async function seedCatalog(
@@ -55,9 +61,19 @@ export async function seedCatalog(
     variantsUpdated: 0,
     unitsCreated: 0,
     unitsKept: 0,
+    referencesCreated: 0,
+    referencesUpdated: 0,
+    examplesSet: 0,
   };
 
-  const categorySlugs = [...new Set(data.products.map((p) => p.categorySlug))];
+  const listed = [...data.products, ...data.references];
+  const productSlugs = new Set(data.products.map((p) => p.slug));
+  const clash = data.references.filter((r) => productSlugs.has(r.slug)).map((r) => r.slug);
+  if (clash.length > 0) {
+    throw new Error(`Slug dipakai produk dan referensi sekaligus: ${clash.join(', ')}`);
+  }
+
+  const categorySlugs = [...new Set(listed.map((p) => p.categorySlug))];
   const categories = await must(
     'kategori',
     admin.from('categories').select('id, slug').in('slug', categorySlugs),
@@ -93,12 +109,16 @@ export async function seedCatalog(
       .select('id, slug')
       .in(
         'slug',
-        data.products.map((p) => p.slug),
+        listed.map((p) => p.slug),
       ),
   );
   const productId = new Map(existingProducts.map((p) => [p.slug as string, p.id as string]));
 
-  for (const p of data.products) {
+  const entries = [
+    ...data.products.map((p) => ({ ...p, isForSale: true })),
+    ...data.references.map((r) => ({ ...r, description: '', isForSale: false })),
+  ];
+  for (const p of entries) {
     const brand = brandId.get(p.brandSlug);
     if (!brand) throw new Error(`${p.slug}: merek "${p.brandSlug}" tidak ada di data merek`);
     const descriptive = {
@@ -110,28 +130,31 @@ export async function seedCatalog(
       spec_source_url: p.specSourceUrl,
       eloshapes_url: p.eloshapesUrl,
     };
+    // is_for_sale adalah kolom bisnis: pemilik nanti bisa mengubahnya dari dashboard.
+    const business = { is_active: true, is_for_sale: p.isForSale };
     const id = productId.get(p.slug);
     if (id) {
-      const business = force ? { is_active: true, is_for_sale: true } : {};
       await ok(
         p.slug,
         admin
           .from('products')
-          .update({ ...descriptive, ...business })
+          .update({ ...descriptive, ...(force ? business : {}) })
           .eq('id', id),
       );
-      report.productsUpdated += 1;
+      if (p.isForSale) report.productsUpdated += 1;
+      else report.referencesUpdated += 1;
     } else {
       const row = await must(
         p.slug,
         admin
           .from('products')
-          .insert({ slug: p.slug, ...descriptive, is_active: true, is_for_sale: true })
+          .insert({ slug: p.slug, ...descriptive, ...business })
           .select('id')
           .single(),
       );
       productId.set(p.slug, row.id as string);
-      report.productsCreated += 1;
+      if (p.isForSale) report.productsCreated += 1;
+      else report.referencesCreated += 1;
     }
   }
 
@@ -222,6 +245,35 @@ export async function seedCatalog(
     if (newUnits.length > 0) {
       await ok('unit baru', admin.from('demo_units').insert(newUnits, { defaultToNull: false }));
       report.unitsCreated = newUnits.length;
+    }
+  }
+
+  // ── Pasangan contoh Bandingkan ──
+  if (data.compareExample) {
+    const { data: settings, error } = await admin
+      .from('store_settings')
+      .select('compare_example_current_id, compare_example_target_id')
+      .maybeSingle();
+    if (error) throw new Error(`pengaturan toko: ${error.message}`);
+    if (!settings) throw new Error('Baris pengaturan toko belum ada. Jalankan pnpm db:push dulu.');
+
+    const idFor = (slug: string) => {
+      const id = productId.get(slug);
+      if (!id) throw new Error(`Pasangan contoh: "${slug}" tidak ada di data`);
+      return id;
+    };
+    const wanted = {
+      compare_example_current_id: idFor(data.compareExample.currentSlug),
+      compare_example_target_id: idFor(data.compareExample.targetSlug),
+    };
+    const patch: Partial<typeof wanted> = {};
+    for (const key of Object.keys(wanted) as (keyof typeof wanted)[]) {
+      // Pilihan pemilik tidak ditimpa, kecuali dalam mode paksa.
+      if (force || settings[key] === null) patch[key] = wanted[key];
+    }
+    if (Object.keys(patch).length > 0) {
+      await ok('pasangan contoh', admin.from('store_settings').update(patch).eq('id', true));
+      report.examplesSet = Object.keys(patch).length;
     }
   }
 

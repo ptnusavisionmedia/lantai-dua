@@ -34,4 +34,21 @@ export type SeedProduct = {
 
 export type SeedBrand = { slug: string; name: string };
 
-export type CatalogSeed = { brands: SeedBrand[]; products: SeedProduct[] };
+/**
+ * Mouse referensi untuk Bandingkan: tidak dijual, tanpa varian dan unit demo, dan tidak punya
+ * halaman produk. Panjang, lebar, tinggi, dan bobot wajib dari sumber resmi.
+ */
+export type SeedReference = Pick<
+  SeedProduct,
+  'slug' | 'brandSlug' | 'categorySlug' | 'modelName' | 'specs' | 'specSources' | 'eloshapesUrl'
+> & { specSourceUrl: string };
+
+/** Pasangan contoh awal Bandingkan. Seed hanya mengisinya ke pengaturan toko kalau masih kosong. */
+export type CompareExample = { currentSlug: string; targetSlug: string };
+
+export type CatalogSeed = {
+  brands: SeedBrand[];
+  products: SeedProduct[];
+  references: SeedReference[];
+  compareExample: CompareExample | null;
+};

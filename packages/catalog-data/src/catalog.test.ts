@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { catalogSeed } from './catalog';
-import type { SeedProduct } from './types';
+import type { SeedProduct, SeedReference } from './types';
 
 type TemplateAttr = { type: string; scope: 'product' | 'variant'; options: string[] | null };
 
@@ -43,11 +43,13 @@ function isValidValue(attr: TemplateAttr, value: unknown): boolean {
   }
 }
 
-const { brands, products } = catalogSeed;
+const { brands, products, references, compareExample } = catalogSeed;
+const listed: (SeedProduct | SeedReference)[] = [...products, ...references];
+const variantsOf = (p: SeedProduct | SeedReference) => ('variants' in p ? p.variants : []);
+const SIZE_KEYS = ['length_mm', 'width_mm', 'height_mm', 'weight_g'];
 const all = (pred: (p: SeedProduct) => boolean) => products.some(pred);
 const units = products.flatMap((p) => p.demoUnits);
 const stock = (p: SeedProduct) => p.variants.reduce((s, v) => s + v.stockQty, 0);
-const variantKeys = (p: SeedProduct) => p.variants.flatMap((v) => Object.keys(v.attributes));
 const PADS = ['mousepad', 'glasspad', 'deskmat'];
 const UNIT_LETTER: Record<string, string> = { mouse: 'M', keyboard: 'K', headset: 'H' };
 
@@ -103,7 +105,7 @@ describe('catalog seed: specs', () => {
   });
 
   it('uses only template keys with valid values', () => {
-    for (const p of products) {
+    for (const p of listed) {
       const template = templates.get(p.categorySlug);
       expect(template, p.slug).toBeDefined();
       const check = (scope: 'product' | 'variant', values: Record<string, unknown>) => {
@@ -115,13 +117,16 @@ describe('catalog seed: specs', () => {
         }
       };
       check('product', p.specs);
-      for (const v of p.variants) check('variant', v.attributes);
+      for (const v of variantsOf(p)) check('variant', v.attributes);
     }
   });
 
   it('cites a source for every spec and variant attribute', () => {
-    for (const p of products) {
-      const keys = new Set([...Object.keys(p.specs), ...variantKeys(p)]);
+    for (const p of listed) {
+      const keys = new Set([
+        ...Object.keys(p.specs),
+        ...variantsOf(p).flatMap((v) => Object.keys(v.attributes)),
+      ]);
       for (const k of keys) expect(p.specSources[k], `${p.slug}.${k}`).toMatch(/^(resmi|ukur)$/);
       for (const k of Object.keys(p.specSources)) expect(keys.has(k), `${p.slug}: ${k}`).toBe(true);
       if (Object.values(p.specSources).includes('resmi')) {
@@ -157,7 +162,7 @@ describe('catalog seed: specs', () => {
   });
 
   it('links eloshapes only for mice', () => {
-    for (const p of products) {
+    for (const p of listed) {
       if (p.eloshapesUrl === null) continue;
       expect(p.categorySlug, p.slug).toBe('mouse');
       expect(p.eloshapesUrl, p.slug).toMatch(/^https:\/\/(www\.)?eloshapes\.com\//);
@@ -169,16 +174,18 @@ describe('catalog seed: identity', () => {
   it('uses unique slugs prefixed by a known brand', () => {
     const brandSlugs = new Set(brands.map((b) => b.slug));
     expect(brandSlugs.size).toBe(brands.length);
-    expect(new Set(products.map((p) => p.slug)).size).toBe(products.length);
-    for (const p of products) {
+    // Slug unik di gabungan produk dan referensi, dan tidak pernah "ukur" (dipakai URL Bandingkan).
+    expect(new Set(listed.map((p) => p.slug)).size).toBe(listed.length);
+    for (const p of listed) {
       expect(p.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      expect(p.slug, p.slug).not.toBe('ukur');
       expect(brandSlugs.has(p.brandSlug), p.slug).toBe(true);
       expect(p.slug.startsWith(`${p.brandSlug}-`), p.slug).toBe(true);
-      expect(p.description.trim(), p.slug).not.toBe('');
     }
+    for (const p of products) expect(p.description.trim(), p.slug).not.toBe('');
     for (const b of brands)
       expect(
-        all((p) => p.brandSlug === b.slug),
+        listed.some((p) => p.brandSlug === b.slug),
         b.slug,
       ).toBe(true);
   });
@@ -216,5 +223,28 @@ describe('catalog seed: identity', () => {
       expect(v.priceIdr % 1000, v.sku).toBe(0);
       expect(Number.isInteger(v.stockQty) && v.stockQty >= 0, v.sku).toBe(true);
     }
+  });
+});
+
+describe('catalog seed: references', () => {
+  it('gives every reference mouse four official sizes', () => {
+    for (const r of references) {
+      expect(r.categorySlug, r.slug).toBe('mouse');
+      for (const k of SIZE_KEYS) {
+        expect(r.specs[k], `${r.slug}.${k}`).toBeGreaterThan(0);
+        expect(r.specSources[k], `${r.slug}.${k}`).toBe('resmi');
+      }
+      expect(r.specSourceUrl, r.slug).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('points the example pair at a known mouse and a for-sale mouse', () => {
+    expect(compareExample).not.toBeNull();
+    expect(
+      listed.some((p) => p.slug === compareExample?.currentSlug && p.categorySlug === 'mouse'),
+    ).toBe(true);
+    expect(
+      products.some((p) => p.slug === compareExample?.targetSlug && p.categorySlug === 'mouse'),
+    ).toBe(true);
   });
 });

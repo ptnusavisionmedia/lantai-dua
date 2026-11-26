@@ -1,5 +1,5 @@
 /**
- * Memasukkan 16 produk asli Fase 1A ke project Supabase dev.
+ * Memasukkan 16 produk asli, mouse referensi, dan pasangan contoh Bandingkan ke project Supabase dev.
  * Jalankan dari root: `pnpm db:seed-catalog`. Aman dijalankan berulang kali: harga, stok,
  * `is_active`, dan status unit demo hanya diisi saat baris pertama kali dibuat.
  *

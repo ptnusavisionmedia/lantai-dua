@@ -1,4 +1,4 @@
-import type { CatalogSeed, SeedProduct, SpecSource } from './types.ts';
+import type { CatalogSeed, SeedProduct, SeedReference, SpecSource } from './types.ts';
 
 /**
  * Data produk asli untuk Fase 1A.
@@ -700,6 +700,32 @@ const products: SeedProduct[] = [
   },
 ];
 
+/**
+ * Mouse referensi untuk Bandingkan (Fase 1B). Tidak dijual dan tidak punya halaman produk.
+ * Keempat ukuran wajib disalin dari halaman resmi pabrikan yang dibuka saat itu. Atribut lain
+ * hanya diisi kalau tertulis di sumber yang sama.
+ */
+const references: SeedReference[] = [
+  {
+    slug: 'logitech-g102-lightsync',
+    brandSlug: 'logitech',
+    categorySlug: 'mouse',
+    modelName: 'G102 Lightsync',
+    // Halaman resmi menulis Length 116,6 mm, Width 62,1 mm, Height 38,2 mm, Weight 85 g, dan "Wired Gaming Mouse".
+    specs: {
+      length_mm: 116.6,
+      width_mm: 62.1,
+      height_mm: 38.2,
+      weight_g: 85,
+      connectivity: ['Kabel'],
+    },
+    specSources: sources(['length_mm', 'width_mm', 'height_mm', 'weight_g', 'connectivity']),
+    specSourceUrl:
+      'https://www.logitechg.com/en-my/shop/p/g102-lightsync-rgb-gaming-mouse.910-005802',
+    eloshapesUrl: null,
+  },
+];
+
 export const catalogSeed: CatalogSeed = {
   brands: [
     { slug: 'artisan', name: 'Artisan' },
@@ -716,4 +742,6 @@ export const catalogSeed: CatalogSeed = {
     { slug: 'vortexseries', name: 'VortexSeries' },
   ],
   products,
+  references,
+  compareExample: { currentSlug: 'logitech-g102-lightsync', targetSlug: 'vortexseries-ignix-f1' },
 };
