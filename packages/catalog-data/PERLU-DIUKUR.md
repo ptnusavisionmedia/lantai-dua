@@ -1,25 +1,33 @@
 # Perlu Diukur
 
-Daftar ini berisi nilai spek gear pemilik yang **tidak tercantum di sumber resmi**, atau yang sumber resminya saling bertentangan. Nilai-nilai ini sengaja dikosongkan di `src/catalog.ts`.
+Daftar ini berisi nilai spek gear pemilik yang **tidak tercantum di sumber resmi**, atau yang sumber resminya saling bertentangan.
 
-Setelah diukur atau dicek, isi nilainya di `catalog.ts` dengan sumber `'ukur'`, lalu jalankan `pnpm db:seed-catalog`. Nilai yang tidak bisa dipastikan boleh tetap kosong. Jangan mengarang.
+Setelah diukur atau dicek, isi nilainya di `src/catalog.ts`:
 
-## Yang perlu diukur atau dicek
+- sumber `'ukur'` dipakai untuk hasil pengukuran atau pemeriksaan langsung pada unit;
+- sumber `'resmi'` dipakai untuk nilai dari pabrikan atau toko resmi merek.
 
-| produk                    | key                                  | satuan | cara ukur                                                                                                                                                                                                                                                                                                       |
-| ------------------------- | ------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VortexSeries Ignix R1 Pro | `shape`                              | –      | Taruh mouse menghadap depan. Kalau sisi kiri dan kanan bentuknya sama, isi `Simetris`. Kalau badannya melengkung untuk tangan kanan, isi `Ergonomis kanan`. Halaman resmi bertentangan: judulnya menyebut "Ergonomic", deskripsinya menyebut "ambidextrous serta simetris".                                     |
-| VortexSeries Ignix F1     | `length_mm`, `width_mm`, `height_mm` | mm     | Hanya konfirmasi. Halaman resmi menulis `121,48 × 61,27 × 38,20 mm` tanpa label sumbu. Kami anggap urutannya panjang × lebar × tinggi. Cek dengan penggaris bahwa sisi terpanjang sekitar 121 mm.                                                                                                               |
-| VortexSeries Ignix R1 Pro | `length_mm`, `width_mm`, `height_mm` | mm     | Sama seperti F1. Halaman resmi menulis `127,69 × 67,76 × 42,84 mm`.                                                                                                                                                                                                                                             |
-| Royal Kludge M75          | `switch_type` (varian milikmu)       | –      | Tekan satu tombol pelan-pelan. Kalau mulus tanpa benjolan, isi `Linear`. Kalau ada benjolan tanpa bunyi klik, isi `Tactile`. Kalau ada bunyi klik, isi `Clicky`. Tulis juga nama switch-nya (Viridian, Pale Green, atau Fast Silver). Halaman resmi RK menyebut jenis yang berbeda-beda untuk switch yang sama. |
-| dbE Kumo GS1X Pro         | `mic`                                | –      | Kalau mic bisa dicabut, isi `Lepas-pasang`. Kalau menempel permanen (termasuk yang bisa dilipat), isi `Tetap`.                                                                                                                                                                                                  |
-| dbE Kumo GS1X Pro         | `back_type`                          | –      | Kalau bagian luar cangkir telinga tertutup rapat, isi `Closed-back`. Kalau berlubang atau berjaring, isi `Open-back`.                                                                                                                                                                                           |
-| dbE Kumo GS1X Pro         | `color`                              | –      | Tulis warna unitmu, lalu ganti nama varian `Standar` dengan warna itu.                                                                                                                                                                                                                                          |
-| VortexSeries Ignix Glide  | model                                | –      | Pastikan modelnya. Data sekarang memakai **GLIDE V2** (490 × 420 mm, tebal 3,8 mm). Kalau milikmu **VP-001** (500 × 400 mm, tebal ±4 mm), beri tahu supaya datanya diganti.                                                                                                                                     |
-| Lastpad Hathor            | `size`                               | –      | Lihat label ukuran di kemasan atau di toko: `S`, `M`, `L`, `XL`, atau `XXL`.                                                                                                                                                                                                                                    |
-| Lastpad Hathor            | `surface`                            | –      | Lihat kemasan. Isi `Control`, `Speed`, atau `Hybrid` hanya kalau tertulis jelas. Judul toko resmi menyebut "Type-Balance", yang tidak cocok persis dengan pilihan mana pun.                                                                                                                                     |
-| Lastpad Hathor            | `length_mm`, `width_mm`              | mm     | Ukur dengan meteran dari ujung ke ujung, tidak termasuk jahitan yang menonjol. Sisi terpanjang adalah panjang (`length_mm`). Bulatkan ke 1 mm.                                                                                                                                                                  |
-| Lastpad Hathor            | `thickness_mm`                       | mm     | Ukur dengan jangka sorong di tengah tepi pad tanpa ditekan. Kalau tidak ada jangka sorong, tumpuk 5 kartu ATM (tebal masing-masing ±0,76 mm) di sebelahnya sebagai pembanding. Bulatkan ke 0,5 mm.                                                                                                              |
+Setelah itu jalankan `pnpm db:seed-catalog`. Nilai yang belum pasti boleh tetap kosong. Jangan mengarang.
+
+## Masih perlu dicek
+
+| produk         | key                                             | satuan        | cara ukur                                                                                                                                                                                                                                                          |
+| -------------- | ----------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lastpad Hathor | `size`, `length_mm`, `width_mm`, `thickness_mm` | –, mm, mm, mm | Toko INFINITAS mencantumkan varian ritel XL berukuran 490 × 420 × 4,0 mm. Cocokkan dengan label kemasan unitmu. Kalau label tidak memuat ukuran, ukur kedua sisi dengan meteran (sisi terpanjang = panjang), dan ukur ketebalan di tepi pad tanpa menekan busanya. |
+| Lastpad Hathor | `surface`                                       | –             | Kesan pemilik: _soft control feel / balance_ dengan _stopping power_ yang cukup untuk _tactical shooter_. Klasifikasi ritel menyebut `Control`. Isi bersamaan dengan ukuran di atas.                                                                               |
+
+## Sudah diisi (26 November 2026)
+
+| produk                    | key                                  | nilai                     | sumber                                                                                                                                    |
+| ------------------------- | ------------------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| VortexSeries Ignix R1 Pro | `shape`                              | Ergonomis kanan           | `resmi`. Manual pabrikan menyebut desain ergonomis, dan EloShapes mengelompokkannya sebagai ergonomis kanan. Tautan EloShapes ikut diisi. |
+| VortexSeries Ignix F1     | `length_mm`, `width_mm`, `height_mm` | 121,48 × 61,27 × 38,20 mm | `resmi`. Manual memastikan urutan P × L × T. Nilainya tidak berubah.                                                                      |
+| VortexSeries Ignix R1 Pro | `length_mm`, `width_mm`, `height_mm` | 127,69 × 67,76 × 42,84 mm | `resmi`. Manual memastikan urutan P × L × T. Nilainya tidak berubah.                                                                      |
+| Royal Kludge M75          | `switch_type` (Fast Silver)          | Linear                    | `ukur`, dicek pemilik pada unitnya. Viridian dan Pale Green tetap kosong.                                                                 |
+| dbE Kumo GS1X Pro         | `mic`                                | Lepas-pasang              | `resmi`. Toko resmi dbE menjual mic pengganti khusus GS1X Pro.                                                                            |
+| dbE Kumo GS1X Pro         | `back_type`                          | Closed-back               | `ukur`, identifikasi visual dari foto resmi earcup.                                                                                       |
+| dbE Kumo GS1X Pro         | `color`                              | Hitam                     | `ukur`, dikonfirmasi pemilik. Nama varian sekarang `Hitam`.                                                                               |
+| VortexSeries Ignix Glide  | model                                | GLIDE V2                  | Dikonfirmasi pemilik. Data yang dipakai sudah GLIDE V2.                                                                                   |
 
 ## Sudah lengkap dari sumber resmi
 

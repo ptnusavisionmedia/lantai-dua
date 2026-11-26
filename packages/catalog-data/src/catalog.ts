@@ -73,18 +73,23 @@ const products: SeedProduct[] = [
     modelName: 'Ignix R1 Pro',
     description:
       'Mouse tri-mode sekitar 60 gram dengan sensor PixArt PAW3395 PRO, polling hingga 1000 Hz, dan baterai 500 mAh.',
-    // Bentuk sengaja kosong: judul halaman resmi menyebut "Ergonomic", deskripsinya "ambidextrous serta simetris".
+    // Bentuk: manual pabrikan menyebut desain ergonomis, dan EloShapes mengelompokkannya sebagai
+    // ergonomis tangan kanan (deskripsi toko VortexSeries menyebut "simetris", tapi manual yang dipakai).
+    // Manual: https://assets.zyrosite.com/AMqDx3O7Z1H4jK5k/manual-book-ignix-r1-lBzZGUvyPOsNutMh.pdf
+    // Manual juga memastikan urutan dimensi P × L × T.
     specs: {
       length_mm: 127.69,
       width_mm: 67.76,
       height_mm: 42.84,
       weight_g: 60,
+      shape: 'Ergonomis kanan',
       connectivity: TRI_MODE,
       sensor: 'PixArt PAW3395 PRO',
     },
-    specSources: sources([...MOUSE_SPECS, 'color']),
+    specSources: sources([...MOUSE_SPECS, 'shape', 'color']),
     specSourceUrl: 'https://vortexseries.net/products/ignix-r1',
-    eloshapesUrl: null,
+    eloshapesUrl:
+      'https://www.eloshapes.com/mouse/compare?p=razer-deathadder-v3-vs.-vortex-series-ignix-r1-pro',
     ownerGear: true,
     variants: [
       {
@@ -161,9 +166,13 @@ const products: SeedProduct[] = [
     modelName: 'M75',
     description:
       'Keyboard 75% gasket mount tri-mode dengan layar OLED dan knob, keycap PBT double-shot, dan switch hot-swap.',
-    // Jenis switch sengaja kosong: halaman resmi RK menyebut jenis yang saling bertentangan.
+    // Halaman resmi RK menyebut jenis switch yang saling bertentangan. Hanya Fast Silver yang diisi,
+    // karena pemilik mengecek langsung di unitnya (Linear). Viridian dan Pale Green tetap kosong.
     specs: { layout: '75%', connectivity: TRI_MODE, hot_swap: true },
-    specSources: sources(['layout', 'connectivity', 'hot_swap', 'switch_name', 'color']),
+    specSources: sources(
+      ['layout', 'connectivity', 'hot_swap', 'switch_name', 'color'],
+      ['switch_type'],
+    ),
     specSourceUrl: 'https://rkgamingstore.com/products/m75-wireless-gaming-keyboard',
     eloshapesUrl: null,
     ownerGear: true,
@@ -186,8 +195,8 @@ const products: SeedProduct[] = [
       },
       {
         sku: 'L2-RKG-M75-BLU-FSV',
-        name: 'Fast Silver · Blue',
-        attributes: { switch_name: 'Fast Silver', color: 'Blue' },
+        name: 'Fast Silver (linear) · Blue',
+        attributes: { switch_name: 'Fast Silver', switch_type: 'Linear', color: 'Blue' },
         priceIdr: 1_099_000,
         stockQty: 1,
         sortOrder: 3,
@@ -205,18 +214,26 @@ const products: SeedProduct[] = [
     modelName: 'Kumo GS1X Pro',
     description:
       'Headset ringan sekitar 161 gram dengan tiga koneksi: dongle 2.4 GHz, Bluetooth 5.3, dan jack 3,5 mm.',
-    specs: { connectivity: ['3.5 mm', 'Wireless 2.4 GHz', 'Bluetooth'], weight_g: 161 },
-    specSources: sources(['connectivity', 'weight_g']),
+    // Mic: toko resmi dbE menjual mic pengganti khusus GS1X Pro, jadi mic-nya bisa dilepas.
+    // Closed-back dan warna: dicek pemilik (foto resmi earcup dan unit miliknya).
+    specs: {
+      connectivity: ['3.5 mm', 'Wireless 2.4 GHz', 'Bluetooth'],
+      mic: 'Lepas-pasang',
+      back_type: 'Closed-back',
+      weight_g: 161,
+    },
+    specSources: sources(['connectivity', 'mic', 'weight_g'], ['back_type', 'color']),
     specSourceUrl:
       'https://www.tokopedia.com/dbeofficial/dbe-kumo-gs1x-pro-superlight-triple-connection-gaming-headset-dengan-bass-jernih-bluetooth-5-3-dongle-2-4ghz-untuk-pc-smartphone-tablet-dan-console-1732440966058903038',
     eloshapesUrl: null,
     ownerGear: true,
-    // Toko resmi tidak mencantumkan warna; varian diberi nama netral sampai pemilik mengisinya.
+    // SKU tetap berakhiran -STD supaya seed memperbarui varian yang sudah ada (seed mencari lewat SKU),
+    // bukan membuat varian baru di samping yang lama.
     variants: [
       {
         sku: 'L2-DBE-GS1XPRO-STD',
-        name: 'Standar',
-        attributes: {},
+        name: 'Hitam',
+        attributes: { color: 'Hitam' },
         priceIdr: 549_000,
         stockQty: 8,
         sortOrder: 1,
