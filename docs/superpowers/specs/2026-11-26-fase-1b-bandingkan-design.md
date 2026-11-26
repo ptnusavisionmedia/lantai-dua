@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Tanggal | 26 November 2026 |
-| Status | Draf, menunggu persetujuan pemilik produk |
+| Status | Disetujui pemilik produk, 26 November 2026 |
 | Bagian dari | Fase 1 (Web MVP), bagian kedua dari enam |
 | Dasar | [PRD](../../PRD.md) §5, §7, §9.1 (L4), §9.5 (B1–B12), §10.1, §11, §11.2, §15 · [Design system](../../../design-system/lantai-dua/MASTER.md) (garis ukur, ilustrasi, M1) · [Desain 1A](2026-11-25-fase-1a-katalog-design.md) |
 
