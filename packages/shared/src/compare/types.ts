@@ -37,3 +37,22 @@ export type Gear = { kind: 'item'; productId: string } | { kind: 'manual'; specs
 
 /** Pasangan contoh dari pengaturan toko (id produk, boleh kosong). */
 export type CompareExamples = { currentId: string | null; targetId: string | null };
+
+/** Satu baris tabel Bandingkan. `diff` hanya untuk angka yang ada di kedua sisi. */
+export type CompareTableRow = {
+  key: string;
+  label: string;
+  current: string;
+  target: string;
+  diff: string | null;
+};
+
+/** Kotak dalam satuan mm, di dalam viewBox panelnya. */
+export type Box = { x: number; y: number; w: number; h: number };
+export type BoxPanel = { width: number; height: number; current: Box; target: Box };
+export type BoxPanels = {
+  top: BoxPanel | null;
+  side: BoxPanel | null;
+  topGap: string | null;
+  sideGap: string | null;
+};

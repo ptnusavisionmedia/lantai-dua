@@ -1,23 +1,6 @@
-import { type AttributeDef, formatDimensions } from '@lantai-dua/shared/catalog';
+import { type AttributeDef, formatDimensions, formatSpecValue } from '@lantai-dua/shared/catalog';
 
-const number = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
 const DIMENSION_KEYS = ['length_mm', 'width_mm', 'height_mm'];
-
-function formatValue(attr: AttributeDef, value: unknown): string | null {
-  if (value === undefined || value === null || value === '') return null;
-  switch (attr.type) {
-    case 'number':
-      return typeof value === 'number'
-        ? `${number.format(value)}${attr.unit ? ` ${attr.unit}` : ''}`
-        : null;
-    case 'boolean':
-      return value === true ? 'Ya' : value === false ? 'Tidak' : null;
-    case 'multi_enum':
-      return Array.isArray(value) && value.length > 0 ? value.join(', ') : null;
-    default:
-      return typeof value === 'string' ? value : null;
-  }
-}
 
 /**
  * Semua atribut template yang punya nilai, dengan label dan satuannya. Atribut level varian
@@ -42,7 +25,7 @@ export function SpecTable({
       continue;
     }
     const source = attr.scope === 'variant' ? variantAttributes : specs;
-    const value = formatValue(attr, source[attr.key]);
+    const value = formatSpecValue(attr, source[attr.key]);
     if (value !== null) rows.push({ key: attr.key, label: attr.label, value });
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { formatDimensions, formatRupiah } from './format';
+import { formatDimensions, formatRupiah, formatSpecValue } from './format';
 import { priceLabel } from './labels';
+import type { AttributeDef } from './types';
 
 describe('format', () => {
   it('formats rupiah and price ranges', () => {
@@ -21,5 +22,36 @@ describe('format', () => {
       '121,48 × 61,27 × 38,2 mm',
     );
     expect(formatDimensions({ length_mm: 124 })).toBeNull();
+  });
+});
+
+describe('formatSpecValue', () => {
+  const attr = (type: AttributeDef['type'], unit: string | null = null): AttributeDef => ({
+    key: 'k',
+    label: 'K',
+    type,
+    scope: 'product',
+    unit,
+    options: null,
+    isFilterable: false,
+    isComparable: true,
+    sortOrder: 1,
+  });
+
+  it('formats spec values like the 1A spec table', () => {
+    expect(formatSpecValue(attr('number', 'mm'), 121.48)).toBe('121,48 mm');
+    expect(formatSpecValue(attr('number'), 3)).toBe('3');
+    expect(formatSpecValue(attr('boolean'), true)).toBe('Ya');
+    expect(formatSpecValue(attr('boolean'), false)).toBe('Tidak');
+    expect(formatSpecValue(attr('multi_enum'), ['Kabel', 'Bluetooth'])).toBe('Kabel, Bluetooth');
+    expect(formatSpecValue(attr('enum'), 'Simetris')).toBe('Simetris');
+  });
+
+  it('returns null for missing or mistyped values', () => {
+    expect(formatSpecValue(attr('number', 'g'), undefined)).toBeNull();
+    expect(formatSpecValue(attr('number', 'g'), '60')).toBeNull();
+    expect(formatSpecValue(attr('text'), '')).toBeNull();
+    expect(formatSpecValue(attr('multi_enum'), [])).toBeNull();
+    expect(formatSpecValue(attr('boolean'), 'ya')).toBeNull();
   });
 });
