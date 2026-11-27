@@ -182,6 +182,56 @@ export async function deleteReservationFixture(
   await deleteCatalogFixture(admin, f.prefix);
 }
 
+/** Waktu sekarang ditambah `m` menit (boleh negatif). */
+export function minutesFromNow(m: number): Date {
+  return new Date(Date.now() + m * 60_000);
+}
+
+/**
+ * Menggeser jadwal reservasi lewat admin. Trigger 1C-1 ikut menggeser periode item dan kursinya.
+ * Dua reservasi yang akan tumpang tindih setelah digeser harus milik pelanggan berbeda dan dibuat
+ * di slot yang sama, supaya nomor kursinya berbeda.
+ */
+export async function shiftReservation(code: string, startsAt: Date, minutes = 30): Promise<void> {
+  const { error } = await adminClient()
+    .from('reservations')
+    .update({
+      starts_at: startsAt.toISOString(),
+      ends_at: new Date(startsAt.getTime() + minutes * 60_000).toISOString(),
+    })
+    .eq('code', code);
+  if (error) throw new Error(`geser reservasi ${code}: ${error.message}`);
+}
+
+/** Mengubah status (dan kolom lain) langsung lewat admin, untuk menyiapkan keadaan tes. */
+export async function setStatusAsAdmin(
+  code: string,
+  status: string,
+  extra: Record<string, unknown> = {},
+): Promise<void> {
+  const { error } = await adminClient()
+    .from('reservations')
+    .update({ status, ...extra })
+    .eq('code', code);
+  if (error) throw new Error(`ubah status ${code}: ${error.message}`);
+}
+
+/** Memanggil `staff_set_reservation_status` sebagai persona (atau tamu). */
+export async function staffSet(
+  who: Persona | 'anon',
+  code: string,
+  status: string,
+  reason?: string,
+): Promise<{ error: { message: string } | null }> {
+  const client = who === 'anon' ? anonClient() : clientFor(who);
+  const { error } = await client.rpc('staff_set_reservation_status', {
+    p_code: code,
+    p_status: status,
+    p_reason: reason ?? null,
+  });
+  return { error: error ? { message: error.message } : null };
+}
+
 export type ReserveResult = {
   code: string | null;
   error: { message: string; details: string | null; code: string } | null;

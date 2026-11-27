@@ -711,6 +711,7 @@ export type Database = {
         Row: {
           address: string
           cancel_cutoff_minutes: number
+          checkin_open_minutes: number
           compare_example_current_id: string | null
           compare_example_target_id: string | null
           id: boolean
@@ -718,6 +719,7 @@ export type Database = {
           max_active_reservations: number
           max_days_ahead: number
           min_lead_minutes: number
+          no_show_after_minutes: number
           pickup_hours: number
           session_minutes: number
           updated_at: string
@@ -726,6 +728,7 @@ export type Database = {
         Insert: {
           address: string
           cancel_cutoff_minutes?: number
+          checkin_open_minutes?: number
           compare_example_current_id?: string | null
           compare_example_target_id?: string | null
           id?: boolean
@@ -733,6 +736,7 @@ export type Database = {
           max_active_reservations?: number
           max_days_ahead?: number
           min_lead_minutes?: number
+          no_show_after_minutes?: number
           pickup_hours?: number
           session_minutes?: number
           updated_at?: string
@@ -741,6 +745,7 @@ export type Database = {
         Update: {
           address?: string
           cancel_cutoff_minutes?: number
+          checkin_open_minutes?: number
           compare_example_current_id?: string | null
           compare_example_target_id?: string | null
           id?: boolean
@@ -748,6 +753,7 @@ export type Database = {
           max_active_reservations?: number
           max_days_ahead?: number
           min_lead_minutes?: number
+          no_show_after_minutes?: number
           pickup_hours?: number
           session_minutes?: number
           updated_at?: string
@@ -1074,6 +1080,14 @@ export type Database = {
           variant_name: string
         }[]
       }
+      reservation_contacts: {
+        Args: { p_reservation_ids: string[] }
+        Returns: {
+          full_name: string
+          reservation_id: string
+          whatsapp: string
+        }[]
+      }
       reservation_slots: {
         Args: { p_from: string; p_to: string; p_variant_ids: string[] }
         Returns: {
@@ -1090,6 +1104,14 @@ export type Database = {
       }
       revalidate_gear_values: {
         Args: { p_category_id: string }
+        Returns: undefined
+      }
+      staff_set_reservation_status: {
+        Args: {
+          p_code: string
+          p_reason?: string
+          p_status: Database["public"]["Enums"]["reservation_status"]
+        }
         Returns: undefined
       }
       validate_spec_values: {

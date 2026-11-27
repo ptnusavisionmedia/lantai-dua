@@ -6,8 +6,15 @@ import { PERSONAS, type Persona } from './personas';
 
 const noSession = { auth: { persistSession: false, autoRefreshToken: false } } as const;
 
-/** Perubahan profil setelah akun dibuat (akun baru selalu customer aktif). */
-const PROFILE_PATCH: Partial<Record<Persona, { role: string; is_active?: boolean }>> = {
+/**
+ * Perubahan profil setelah akun dibuat (akun baru selalu customer aktif tanpa nomor WhatsApp).
+ * Pelanggan diberi nomor fiktif karena reservasi mewajibkan nomor WhatsApp (A4).
+ */
+const PROFILE_PATCH: Partial<
+  Record<Persona, { role?: string; is_active?: boolean; whatsapp?: string }>
+> = {
+  customer: { whatsapp: '6281200000001' },
+  customer2: { whatsapp: '6281200000002' },
   operator: { role: 'operator' },
   operatorInactive: { role: 'operator', is_active: false },
   owner: { role: 'owner' },
