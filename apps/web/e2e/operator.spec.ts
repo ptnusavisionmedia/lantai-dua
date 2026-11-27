@@ -178,6 +178,37 @@ test('shows a new reservation without reloading', async ({ page }) => {
   await updateReservation(code, { status: 'cancelled', cancel_reason: 'bersih-bersih tes' });
 });
 
+test('stays live after visiting a detail page and coming back', async ({ page }) => {
+  await asOperator(page);
+  await expect(page.getByText('Langsung', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await rowOf(page, first)
+    .getByRole('link', { name: new RegExp(first) })
+    .click();
+  await expect(page).toHaveURL(`/operator/reservasi/${first}`);
+  await page.getByRole('link', { name: '← Hari ini' }).click();
+  await expect(page).toHaveURL('/operator');
+  await expect(page.getByText('Langsung', { exact: true })).toBeVisible({ timeout: 15_000 });
+  const code = await make(['L2-VTX-IGNIXR1PRO-BLK'], at(-5));
+  await expect(rowOf(page, code)).toBeVisible({ timeout: 10_000 });
+  await updateReservation(code, { status: 'cancelled', cancel_reason: 'bersih-bersih tes' });
+});
+
+test('says when the live connection is lost, with a reload button big enough to tap', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // Semua koneksi realtime langsung ditutup, seperti Wi-Fi yang hilang.
+  await page.routeWebSocket(/\/realtime\/v1\/websocket/, (ws) => {
+    ws.close();
+  });
+  await asOperator(page);
+  await expect(page.getByText('Menyambung ulang…', { exact: true })).toBeVisible();
+  const reload = page.getByRole('button', { name: 'Muat ulang' });
+  await expect(reload).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Terputus', { exact: true })).toBeVisible();
+  expect((await reload.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+});
+
 test('explains a blocked camera and keeps the code field usable', async ({ page }) => {
   await asOperator(page);
   await page.getByRole('button', { name: 'Scan kamera' }).click();

@@ -8,16 +8,23 @@ describe('normalizeWhatsapp', () => {
     ['62812 3456 7890'],
     ['+62 0812-3456-7890'],
     ['(0812) 3456.7890'],
+    ['0062 812 3456 7890'],
   ])('normalizes %s', (input) => {
     expect(normalizeWhatsapp(input)).toBe('6281234567890');
   });
 
-  it.each([[''], ['12345'], ['0812-abc-7890'], ['812345678'], ['0812345'], ['0812345678901234']])(
-    'rejects %j',
-    (input) => {
-      expect(normalizeWhatsapp(input)).toBeNull();
-    },
-  );
+  it.each([
+    [''],
+    ['12345'],
+    ['0812-abc-7890'],
+    ['812345678'],
+    ['0812345'],
+    ['0812345678901234'],
+    ['0000000000'],
+    ['62000000000'],
+  ])('rejects %j', (input) => {
+    expect(normalizeWhatsapp(input)).toBeNull();
+  });
 
   it('accepts the shortest and longest numbers the profile allows', () => {
     expect(normalizeWhatsapp('081234567')).toBe('6281234567');

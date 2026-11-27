@@ -7,6 +7,7 @@ import {
   formatDuration,
   formatMoment,
   formatSession,
+  msUntilWibMidnight,
   slotTime,
   wibDate,
 } from './time';
@@ -69,5 +70,13 @@ describe('formatDay dan formatMoment', () => {
   it('writes the WIB day and moment, even when UTC is still the day before', () => {
     expect(formatDay('2026-11-27T17:30:00Z')).toBe('Sab, 28 Nov 2026');
     expect(formatMoment('2026-11-27T17:30:00Z')).toBe('Sab, 28 Nov 2026 · 00.30 WIB');
+  });
+});
+
+describe('msUntilWibMidnight', () => {
+  it('counts down to the next WIB midnight', () => {
+    expect(msUntilWibMidnight(new Date('2026-11-27T16:59:00Z'))).toBe(60_000); // 23.59 WIB
+    expect(msUntilWibMidnight(new Date('2026-11-27T17:00:00Z'))).toBe(24 * 60 * 60_000); // 00.00 WIB
+    expect(msUntilWibMidnight(new Date('2026-11-27T05:00:00Z'))).toBe(12 * 60 * 60_000); // 12.00 WIB
   });
 });

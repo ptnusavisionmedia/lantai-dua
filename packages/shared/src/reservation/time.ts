@@ -66,6 +66,11 @@ export function formatDay(iso: string): string {
   return `${part(p, 'weekday')}, ${part(p, 'day')} ${part(p, 'month')} ${part(p, 'year')}`;
 }
 
+/** Milidetik sampai tengah malam WIB berikutnya, misalnya untuk memuat ulang Hari ini. */
+export function msUntilWibMidnight(now: Date): number {
+  return Date.parse(`${addDays(wibDate(now), 1)}T00:00:00+07:00`) - now.getTime();
+}
+
 /** "Sab, 28 Nov 2026 · 14.00–14.30 WIB" (PRD §13). */
 export function formatSession(startsAt: string, endsAt: string): string {
   return `${formatDay(startsAt)} · ${slotTime(startsAt)}–${slotTime(endsAt)} WIB`;

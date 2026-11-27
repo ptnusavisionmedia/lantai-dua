@@ -32,6 +32,7 @@ export {
   formatDuration,
   formatMoment,
   formatSession,
+  msUntilWibMidnight,
   slotTime,
   wibDate,
 } from './time';

@@ -1,9 +1,15 @@
 'use client';
 
 import type { Tone } from '@lantai-dua/shared/catalog';
-import { LIVE_TEXT, type LiveState, liveState, wibDate } from '@lantai-dua/shared/reservation';
+import {
+  LIVE_TEXT,
+  type LiveState,
+  liveState,
+  msUntilWibMidnight,
+  wibDate,
+} from '@lantai-dua/shared/reservation';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { Button } from '../button';
 import { StatusLine } from '../catalog/status-line';
@@ -15,16 +21,25 @@ const TICK_MS = 5000;
 /**
  * Pembaruan langsung Hari ini (desain 1C-2 §5.6). Berlangganan perubahan tabel `reservations`
  * (RLS tetap berlaku), lalu memuat ulang data dari server setelah jeda singkat. Data juga dimuat
- * ulang saat tab kembali aktif dan saat koneksi tersambung lagi.
+ * ulang saat tab kembali aktif, saat koneksi tersambung lagi, dan tepat setelah tengah malam WIB,
+ * supaya layar yang dibiarkan menyala semalaman berganti ke hari baru.
  */
 export function LiveRefresh({ today }: { today: string }) {
   const router = useRouter();
   const [state, setState] = useState<LiveState>('reconnecting');
   const [announcement, setAnnouncement] = useState('');
+  // Tanggal dibaca lewat ref, supaya pergantian hari tidak memasang ulang langganan.
+  const todayRef = useRef(today);
+  useEffect(() => {
+    todayRef.current = today;
+  }, [today]);
 
   useEffect(() => {
     const supabase = createBrowserSupabase();
+    // Setelah dilepas, callback yang terlambat datang diabaikan.
+    let active = true;
     let refreshTimer: number | undefined;
+    let midnightTimer: number | undefined;
     let status = 'CONNECTING';
     let notLiveSince: number | null = Date.now();
     let wasLive = false;
@@ -43,24 +58,31 @@ export function LiveRefresh({ today }: { today: string }) {
       }, REFRESH_DELAY_MS);
     };
 
+    // Topik unik per pemasangan: klien browser dipakai bersama satu tab, dan channel lama dengan
+    // topik yang sama bisa masih dalam proses keluar saat komponen dipasang lagi.
     const channel = supabase
-      .channel('operator-hari-ini')
+      .channel(`operator-hari-ini-${crypto.randomUUID()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, (p) => {
+        if (!active) return;
         const startsAt = (p.new as { starts_at?: string } | null)?.starts_at;
-        if (p.eventType === 'INSERT' && startsAt && wibDate(new Date(startsAt)) === today) {
+        if (
+          p.eventType === 'INSERT' &&
+          startsAt &&
+          wibDate(new Date(startsAt)) === todayRef.current
+        ) {
           fresh += 1;
         }
         refreshSoon();
       });
-    let unmounted = false;
 
     // Realtime harus memakai token sesi operator. Tanpa itu koneksinya dianggap tamu, dan RLS
     // menyaring semua perubahan reservasi.
     void (async () => {
       const { data } = await supabase.auth.getSession();
       await supabase.realtime.setAuth(data.session?.access_token ?? null);
-      if (unmounted) return;
+      if (!active) return;
       channel.subscribe((next) => {
+        if (!active) return;
         status = next;
         if (next === 'SUBSCRIBED') {
           // Tersambung lagi setelah putus: perubahan selama putus belum terlihat.
@@ -80,20 +102,30 @@ export function LiveRefresh({ today }: { today: string }) {
     };
     document.addEventListener('visibilitychange', onVisible);
 
+    // Muat ulang sedikit setelah tengah malam WIB, lalu jadwalkan lagi untuk malam berikutnya.
+    const scheduleMidnight = () => {
+      midnightTimer = window.setTimeout(() => {
+        router.refresh();
+        scheduleMidnight();
+      }, msUntilWibMidnight(new Date()) + 1000);
+    };
+    scheduleMidnight();
+
     return () => {
-      unmounted = true;
+      active = false;
       window.clearTimeout(refreshTimer);
+      window.clearTimeout(midnightTimer);
       window.clearInterval(tick);
       document.removeEventListener('visibilitychange', onVisible);
       void supabase.removeChannel(channel);
     };
-  }, [router, today]);
+  }, [router]);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <StatusLine tone={TONE[state]} text={LIVE_TEXT[state]} />
       {state === 'offline' && (
-        <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+        <Button variant="secondary" onClick={() => window.location.reload()}>
           Muat ulang
         </Button>
       )}
