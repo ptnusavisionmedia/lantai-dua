@@ -120,6 +120,19 @@ test.describe('formulir reservasi', () => {
     await expect(page.getByRole('button', { name: /^Hapus / })).toHaveCount(0);
   });
 
+  test('tells a customer at the active limit before they fill the form', async ({ page }) => {
+    // Pelanggan sudah punya F1 14.00 dari tes pertama; satu lagi membuatnya mencapai batas 2.
+    await reserveAs(CUSTOMER, [R1], at('18.00'));
+    await login(page, CUSTOMER, `/reservasi/baru?varian=${F1}&tanggal=${day}&jam=19.00`);
+    await expect(page).toHaveURL((url) => url.pathname === '/reservasi/baru', { timeout: 15_000 });
+    await expect(
+      page.getByText(
+        'Lu udah punya 2 reservasi aktif. Batalkan salah satu dulu, atau tunggu sampai sesinya lewat.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Konfirmasi reservasi' })).toBeDisabled();
+  });
+
   test('fits 360 px without horizontal scroll', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.goto(`/reservasi/baru?varian=${F1}`);

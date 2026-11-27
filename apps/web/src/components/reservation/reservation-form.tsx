@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  createErrorText,
   type ReservableVariant,
   type ReservationQuery,
   type ReservationSettings,
@@ -52,6 +53,7 @@ export function ReservationForm({
   window: dates,
   query,
   viewer,
+  atLimit = false,
 }: {
   variants: ReservableVariant[];
   slots: Slot[];
@@ -60,6 +62,8 @@ export function ReservationForm({
   window: string[];
   query: ReservationQuery;
   viewer: ReservationViewer;
+  /** Pelanggan sudah punya reservasi aktif sebanyak batas toko. */
+  atLimit?: boolean;
 }) {
   const router = useRouter();
   const [routing, startRouting] = useTransition();
@@ -141,8 +145,9 @@ export function ReservationForm({
   };
 
   const reasonText = (s: Slot) => slotReasonText(s, variants, settings);
-  const blocked =
-    skus.length === 0
+  const blocked = atLimit
+    ? createErrorText('too_many_active', null, settings)
+    : skus.length === 0
       ? 'Pilih minimal satu unit demo.'
       : selected
         ? null

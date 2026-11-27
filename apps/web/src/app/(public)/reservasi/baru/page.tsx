@@ -10,6 +10,7 @@ import { ReservationForm } from '@/components/reservation/reservation-form';
 import {
   getReservationViewer,
   getStoreInfo,
+  listMyReservations,
   listReservableVariants,
   listSlots,
 } from '@/lib/reservation-data';
@@ -38,6 +39,18 @@ export default async function ReservasiBaruPage({ searchParams }: Props) {
   );
   // Tanggal awal: dari URL, atau tanggal pertama yang masih punya slot kosong.
   const tanggal = query.tanggal ?? slots.find((s) => s.available)?.date ?? today;
+  // Pelanggan yang sudah mencapai batas reservasi aktif diberi tahu sebelum mengisi formulir,
+  // bukan baru saat Konfirmasi ditolak (anti-tujuan desain §2).
+  const now = Date.now();
+  const active =
+    viewer === 'customer'
+      ? (await listMyReservations()).filter(
+          (r) =>
+            (r.status === 'scheduled' || r.status === 'checked_in') &&
+            new Date(r.endsAt).getTime() > now,
+        ).length
+      : 0;
+  const atLimit = active >= info.maxActiveReservations;
   const areaName = chosen[0]?.areaName ?? variants[0]?.areaName ?? 'Meja Kontrol';
 
   return (
@@ -59,6 +72,7 @@ export default async function ReservasiBaruPage({ searchParams }: Props) {
             window={window}
             query={{ ...query, tanggal }}
             viewer={viewer}
+            atLimit={atLimit}
           />
         </Suspense>
       </div>
