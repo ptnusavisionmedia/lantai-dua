@@ -1,11 +1,14 @@
-import { buildIcs } from '@lantai-dua/shared/reservation';
+import { buildIcs, isLive } from '@lantai-dua/shared/reservation';
 import { getMyReservation, getStoreInfo } from '@/lib/reservation-data';
 
-/** Berkas .ics satu reservasi milik pelanggan yang login; 404 untuk kode lain. */
+/**
+ * Berkas .ics satu reservasi milik pelanggan yang login, selama reservasinya aktif dan belum
+ * berakhir; 404 untuk kode lain, reservasi yang dibatalkan, atau sesi yang sudah lewat.
+ */
 export async function GET(_request: Request, ctx: { params: Promise<{ kode: string }> }) {
   const { kode } = await ctx.params;
   const [r, info] = await Promise.all([getMyReservation(kode), getStoreInfo()]);
-  if (!r) return new Response('Tidak ditemukan', { status: 404 });
+  if (!r || !isLive(r, new Date())) return new Response('Tidak ditemukan', { status: 404 });
   const ics = buildIcs(
     {
       code: r.code,

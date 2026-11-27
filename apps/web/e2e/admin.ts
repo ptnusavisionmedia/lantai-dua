@@ -45,8 +45,100 @@ export async function clearReservations(emails: string[]): Promise<void> {
   if (error) throw new Error(`hapus reservasi: ${error.message}`);
 }
 
+/** Mengisi (atau mengosongkan) nomor WhatsApp profil akun tes. */
+export async function setWhatsapp(email: string, whatsapp: string | null): Promise<void> {
+  const admin = adminClient();
+  const [id] = await userIds(admin, [email]);
+  if (!id) throw new Error(`akun ${email} tidak ada`);
+  const { error } = await admin.from('profiles').update({ whatsapp }).eq('id', id);
+  if (error) throw new Error(`nomor WhatsApp ${email}: ${error.message}`);
+}
+
+/** Nomor WhatsApp yang tersimpan di profil akun tes. */
+export async function whatsappOf(email: string): Promise<string | null> {
+  const admin = adminClient();
+  const [id] = await userIds(admin, [email]);
+  const { data, error } = await admin.from('profiles').select('whatsapp').eq('id', id).single();
+  if (error) throw new Error(`profil ${email}: ${error.message}`);
+  return (data as { whatsapp: string | null }).whatsapp;
+}
+
+/** Waktu sekarang ditambah `m` menit (boleh negatif). */
+export function minutesFromNow(m: number): Date {
+  return new Date(Date.now() + m * 60_000);
+}
+
+const range = (from: string, to: string) => `[${from},${to})`;
+
+/**
+ * Menggeser jadwal reservasi; periode item dan kursi ikut bergeser lewat trigger.
+ * Database dev dipakai bersama, jadi di jam tujuan bisa sudah ada reservasi lain di meja yang
+ * sama. Sebelum digeser, nomor kursinya diganti ke nomor yang kosong di jam asal dan jam tujuan.
+ */
+export async function shiftReservation(code: string, startsAt: Date, minutes = 30): Promise<void> {
+  const admin = adminClient();
+  const from = startsAt.toISOString();
+  const to = new Date(startsAt.getTime() + minutes * 60_000).toISOString();
+  const { data: r, error } = await admin
+    .from('reservations')
+    .select(
+      'id, starts_at, ends_at, reservation_seats(id, area_id, seat_no, area:demo_areas(capacity))',
+    )
+    .eq('code', code)
+    .single();
+  if (error) throw new Error(`reservasi ${code}: ${error.message}`);
+  const res = r as unknown as {
+    id: string;
+    starts_at: string;
+    ends_at: string;
+    reservation_seats: {
+      id: string;
+      area_id: string;
+      seat_no: number;
+      area: { capacity: number } | null;
+    }[];
+  };
+  for (const seat of res.reservation_seats) {
+    const used = new Set<number>();
+    for (const period of [range(res.starts_at, res.ends_at), range(from, to)]) {
+      const { data: others } = await admin
+        .from('reservation_seats')
+        .select('seat_no')
+        .eq('area_id', seat.area_id)
+        .eq('is_active', true)
+        .neq('reservation_id', res.id)
+        .overlaps('period', period);
+      for (const o of others ?? []) used.add(o.seat_no as number);
+    }
+    if (!used.has(seat.seat_no)) continue;
+    const capacity = seat.area?.capacity ?? 0;
+    const free = Array.from({ length: capacity }, (_, i) => i + 1).find((n) => !used.has(n));
+    if (free === undefined) throw new Error(`meja penuh di jam tujuan untuk ${code}`);
+    const { error: seatError } = await admin
+      .from('reservation_seats')
+      .update({ seat_no: free })
+      .eq('id', seat.id);
+    if (seatError) throw new Error(`ganti kursi ${code}: ${seatError.message}`);
+  }
+  await updateReservation(code, { starts_at: from, ends_at: to });
+}
+
+/** Mengubah kolom reservasi langsung lewat admin, untuk menyiapkan keadaan tes. */
+export async function updateReservation(
+  code: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await adminClient().from('reservations').update(patch).eq('code', code);
+  if (error) throw new Error(`ubah reservasi ${code}: ${error.message}`);
+}
+
 /** Membuat reservasi sebagai pelanggan lewat fungsi database, lalu mengembalikan kodenya. */
-export async function reserveAs(email: string, skus: string[], startsAt: string): Promise<string> {
+export async function reserveAs(
+  email: string,
+  skus: string[],
+  startsAt: string,
+  note: string | null = null,
+): Promise<string> {
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '',
@@ -64,7 +156,7 @@ export async function reserveAs(email: string, skus: string[], startsAt: string)
   const { data, error } = await client.rpc('create_reservation', {
     p_variant_ids: ids,
     p_starts_at: startsAt,
-    p_note: null,
+    p_note: note,
   });
   await client.auth.signOut();
   if (error) throw new Error(`reservasi ${email}: ${error.message}`);

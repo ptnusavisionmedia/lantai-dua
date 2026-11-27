@@ -1,3 +1,4 @@
+import { isLive } from '@lantai-dua/shared/reservation';
 import type { Metadata } from 'next';
 import { ButtonLink } from '@/components/button';
 import { DashboardTitle, EmptyState } from '@/components/dashboard-shell';
@@ -11,9 +12,7 @@ export default async function AkunPage() {
   const me = await requireRole(['customer']);
   const firstName = me.fullName.split(' ')[0] || 'kamu';
   const now = new Date();
-  const next = (await listMyReservations()).find(
-    (r) => r.status === 'scheduled' && new Date(r.endsAt).getTime() > now.getTime(),
-  );
+  const next = (await listMyReservations()).find((r) => isLive(r, now));
   return (
     <>
       <DashboardTitle>Halo, {firstName}</DashboardTitle>

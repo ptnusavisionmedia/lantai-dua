@@ -9,6 +9,7 @@ import {
   serializeReservationQuery,
   slotReasonText,
 } from '@lantai-dua/shared/reservation';
+import { normalizeWhatsapp, WHATSAPP_INVALID } from '@lantai-dua/shared/whatsapp';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition } from 'react';
@@ -16,6 +17,7 @@ import { createReservationAction } from '@/app/(public)/reservasi/baru/actions';
 import type { ReservationViewer } from '@/lib/reservation-data';
 import { Button, buttonClasses } from '../button';
 import { Notice } from '../notice';
+import { TextField } from '../text-field';
 import { DateStrip } from './date-strip';
 import { SlotGrid } from './slot-grid';
 import { VariantPicker } from './variant-picker';
@@ -54,6 +56,7 @@ export function ReservationForm({
   query,
   viewer,
   atLimit = false,
+  needsWhatsapp = false,
 }: {
   variants: ReservableVariant[];
   slots: Slot[];
@@ -64,6 +67,8 @@ export function ReservationForm({
   viewer: ReservationViewer;
   /** Pelanggan sudah punya reservasi aktif sebanyak batas toko. */
   atLimit?: boolean;
+  /** Profil pelanggan belum punya nomor WhatsApp (A4); kolomnya tampil di atas Konfirmasi. */
+  needsWhatsapp?: boolean;
 }) {
   const router = useRouter();
   const [routing, startRouting] = useTransition();
@@ -72,6 +77,9 @@ export function ReservationForm({
   const [jam, setJam] = useState<string | null>(query.jam);
   const [pendingSkus, setPendingSkus] = useState<string[] | null>(null);
   const [note, setNote] = useState('');
+  // Nomor WhatsApp sengaja tidak disimpan di URL atau sessionStorage (data pribadi).
+  const [whatsapp, setWhatsapp] = useState('');
+  const [whatsappError, setWhatsappError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const skus = pendingSkus ?? query.skus;
 
@@ -128,12 +136,25 @@ export function ReservationForm({
   const confirm = () => {
     if (!selected) return;
     setError(null);
+    setWhatsappError(null);
+    if (needsWhatsapp && normalizeWhatsapp(whatsapp) === null) {
+      setWhatsappError(WHATSAPP_INVALID);
+      document.getElementById('field-whatsapp')?.focus();
+      return;
+    }
     startSaving(async () => {
       try {
-        const result = await createReservationAction({ skus, startsAt: selected.startsAt, note });
+        const result = await createReservationAction({
+          skus,
+          startsAt: selected.startsAt,
+          note,
+          ...(needsWhatsapp ? { whatsapp } : {}),
+        });
         if (result.ok) {
           writeNote(null);
           router.push(`/akun/reservasi/${result.code}?baru=1`);
+        } else if (result.error === WHATSAPP_INVALID) {
+          setWhatsappError(result.error);
         } else {
           setError(result.error);
           router.refresh();
@@ -193,6 +214,26 @@ export function ReservationForm({
           className="rounded-md border border-border-input bg-surface px-3 py-2 text-base text-ink"
         />
       </div>
+
+      {viewer === 'customer' && needsWhatsapp && (
+        <div className="max-w-[360px]">
+          <TextField
+            label="Nomor WhatsApp"
+            name="whatsapp"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="0812-3456-7890"
+            value={whatsapp}
+            onChange={(e) => {
+              setWhatsapp(e.target.value);
+              setWhatsappError(null);
+            }}
+            help="Dipakai toko kalau perlu ngabarin lu soal reservasi ini."
+            error={whatsappError ?? undefined}
+          />
+        </div>
+      )}
 
       <div className="space-y-3">
         {error && <Notice tone="error">{error}</Notice>}

@@ -1,5 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { clearReservations, reserveAs, startsAtOn, wibDateIn } from './admin';
+import {
+  clearReservations,
+  minutesFromNow,
+  reserveAs,
+  setWhatsapp,
+  shiftReservation,
+  startsAtOn,
+  updateReservation,
+  whatsappOf,
+  wibDateIn,
+} from './admin';
 import { fillLogin, login, product, variantLabelOf } from './data';
 
 // Satu file, berurutan: tes reservasi memakai akun dan unit yang sama, jadi tidak boleh paralel.
@@ -7,6 +17,14 @@ test.describe.configure({ mode: 'serial' });
 
 const CUSTOMER = 'pelanggan3@lantaidua.test';
 const OTHER = 'pelanggan2@lantaidua.test';
+const CUSTOMER_WA = '6281234500003';
+const OTHER_WA = '6281234500002';
+
+// Reservasi mewajibkan nomor WhatsApp, jadi kedua akun disiapkan dengan nomor (seed bisa belum dijalankan ulang).
+test.beforeAll(async () => {
+  await setWhatsapp(CUSTOMER, CUSTOMER_WA);
+  await setWhatsapp(OTHER, OTHER_WA);
+});
 const sku = (slug: string) => product(slug).demoUnits[0]?.variantSku ?? '';
 const F1 = sku('vortexseries-ignix-f1'); // satu unit, tersedia
 const R1 = sku('vortexseries-ignix-r1-pro');
@@ -236,5 +254,89 @@ test.describe('reservasi saya', () => {
 
   test.afterAll(async () => {
     await clearReservations([CUSTOMER, OTHER]);
+  });
+});
+
+test.describe('nomor WhatsApp', () => {
+  const day = wibDateIn(5);
+
+  test.beforeAll(async () => {
+    await clearReservations([CUSTOMER]);
+    await setWhatsapp(CUSTOMER, null);
+  });
+
+  test('asks for a number before the first reservation', async ({ page }) => {
+    await login(page, CUSTOMER, `/reservasi/baru?varian=${F1}&tanggal=${day}&jam=14.00`);
+    await expect(page).toHaveURL(/\/reservasi\/baru/, { timeout: 15_000 });
+    const field = page.getByLabel('Nomor WhatsApp');
+    await expect(field).toBeVisible();
+    await expect(
+      page.getByText('Dipakai toko kalau perlu ngabarin lu soal reservasi ini.'),
+    ).toBeVisible();
+    await field.fill('0812-abc');
+    await page.getByRole('button', { name: 'Konfirmasi reservasi' }).click();
+    await expect(
+      page.getByText('Nomor WhatsApp belum benar. Contoh: 0812-3456-7890'),
+    ).toBeVisible();
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await field.fill('0812 3450 0003');
+    await page.getByRole('button', { name: 'Konfirmasi reservasi' }).click();
+    await expect(page).toHaveURL(/\/akun\/reservasi\/L2D-[2-9A-HJKMNP-Z]{8}\?baru=1$/, {
+      timeout: 15_000,
+    });
+    expect(await whatsappOf(CUSTOMER)).toBe(CUSTOMER_WA);
+  });
+
+  test('does not ask again once saved', async ({ page }) => {
+    await login(page, CUSTOMER, `/reservasi/baru?varian=${F1}`);
+    await expect(page).toHaveURL(/\/reservasi\/baru/, { timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Konfirmasi reservasi' })).toBeVisible();
+    await expect(page.getByLabel('Nomor WhatsApp')).toHaveCount(0);
+  });
+
+  test.afterAll(async () => {
+    await setWhatsapp(CUSTOMER, CUSTOMER_WA);
+    await clearReservations([CUSTOMER]);
+  });
+});
+
+test.describe('status dari toko', () => {
+  const day = wibDateIn(6);
+
+  test.beforeAll(async () => {
+    await clearReservations([OTHER]);
+  });
+
+  test('shows a store cancellation with its reason and no QR', async ({ page }) => {
+    const code = await reserveAs(OTHER, [R1], startsAtOn(day, '15.00'));
+    await updateReservation(code, {
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancel_reason: 'Unit sedang dibersihkan',
+    });
+    await login(page, OTHER, `/akun/reservasi/${code}`);
+    await expect(page).toHaveURL(new RegExp(`/akun/reservasi/${code}`), { timeout: 15_000 });
+    await expect(page.getByText('Dibatalkan toko', { exact: true })).toBeVisible();
+    await expect(page.getByText('Alasan dari toko: Unit sedang dibersihkan')).toBeVisible();
+    await expect(page.getByRole('img', { name: `QR ${code}` })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Unduh ke kalender (.ics)' })).toHaveCount(0);
+    expect((await page.request.get(`/akun/reservasi/${code}/kalender`)).status()).toBe(404);
+  });
+
+  test('keeps a checked-in session in Mendatang with its QR', async ({ page }) => {
+    const code = await reserveAs(OTHER, [F1], startsAtOn(day, '16.00'));
+    await shiftReservation(code, minutesFromNow(-5));
+    await updateReservation(code, { status: 'checked_in' });
+    await login(page, OTHER, '/akun/reservasi');
+    await expect(page).toHaveURL('/akun/reservasi', { timeout: 15_000 });
+    const upcoming = page.getByRole('region', { name: 'Mendatang' });
+    await expect(upcoming.getByRole('link', { name: new RegExp(code) })).toBeVisible();
+    await page.goto(`/akun/reservasi/${code}`);
+    await expect(page.getByText('Check-in', { exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: `QR ${code}` })).toBeVisible();
+  });
+
+  test.afterAll(async () => {
+    await clearReservations([OTHER]);
   });
 });

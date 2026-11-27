@@ -96,6 +96,21 @@ export const getMyReservation = cache(async (code: string): Promise<ReservationV
   return data ? fromReservationRow(data as unknown as ReservationRowWithItems) : null;
 });
 
+/** Nomor WhatsApp di profil pengguna yang login; null untuk tamu atau kalau belum diisi. */
+export const getMyWhatsapp = cache(async (): Promise<string | null> => {
+  const supabase = await createServerSupabase();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('whatsapp')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw new Error(`Profil gagal dimuat: ${error.message}`);
+  return data?.whatsapp ?? null;
+});
+
 export async function getReservationViewer(): Promise<ReservationViewer> {
   const { viewer } = await getCurrentViewer();
   if (viewer.kind === 'guest') return 'guest';

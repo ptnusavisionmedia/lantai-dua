@@ -1,3 +1,4 @@
+import { isLive } from '@lantai-dua/shared/reservation';
 import type { Metadata } from 'next';
 import { ButtonLink } from '@/components/button';
 import { DashboardTitle } from '@/components/dashboard-shell';
@@ -9,8 +10,8 @@ export const metadata: Metadata = { title: 'Reservasi saya' };
 export default async function ReservasiSayaPage() {
   const now = new Date();
   const all = await listMyReservations();
-  const isUpcoming = (r: (typeof all)[number]) =>
-    r.status === 'scheduled' && new Date(r.endsAt).getTime() > now.getTime();
+  // Mendatang: Terjadwal atau Check-in yang sesinya belum berakhir.
+  const isUpcoming = (r: (typeof all)[number]) => isLive(r, now);
   const upcoming = all.filter(isUpcoming);
   const history = all.filter((r) => !isUpcoming(r)).reverse();
 

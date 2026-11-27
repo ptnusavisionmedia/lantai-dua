@@ -1,5 +1,6 @@
 /**
  * Membuat atau memperbarui 7 akun demo LANTAI DUA di project Supabase dev.
+ * Pelanggan diberi nomor WhatsApp fiktif, karena reservasi mewajibkan nomor (A4).
  * Jalankan dari root: `pnpm db:seed-users`. Butuh SUPABASE_URL, SUPABASE_SECRET_KEY, SEED_PASSWORD di .env.local.
  */
 import { createClient, type User } from '@supabase/supabase-js';
@@ -7,22 +8,54 @@ import { createClient, type User } from '@supabase/supabase-js';
 process.loadEnvFile('.env.local');
 
 const ACCOUNTS = [
-  { email: 'pemilik@lantaidua.test', fullName: 'Danu Saputra', role: 'owner', active: true },
-  { email: 'operator1@lantaidua.test', fullName: 'Bima Aditya', role: 'operator', active: true },
-  { email: 'operator2@lantaidua.test', fullName: 'Sari Wulandari', role: 'operator', active: true },
-  { email: 'nonaktif@lantaidua.test', fullName: 'Yoga Pranata', role: 'operator', active: false },
-  { email: 'pelanggan1@lantaidua.test', fullName: 'Raka Pratama', role: 'customer', active: true },
+  {
+    email: 'pemilik@lantaidua.test',
+    fullName: 'Danu Saputra',
+    role: 'owner',
+    active: true,
+    whatsapp: null,
+  },
+  {
+    email: 'operator1@lantaidua.test',
+    fullName: 'Bima Aditya',
+    role: 'operator',
+    active: true,
+    whatsapp: null,
+  },
+  {
+    email: 'operator2@lantaidua.test',
+    fullName: 'Sari Wulandari',
+    role: 'operator',
+    active: true,
+    whatsapp: null,
+  },
+  {
+    email: 'nonaktif@lantaidua.test',
+    fullName: 'Yoga Pranata',
+    role: 'operator',
+    active: false,
+    whatsapp: null,
+  },
+  {
+    email: 'pelanggan1@lantaidua.test',
+    fullName: 'Raka Pratama',
+    role: 'customer',
+    active: true,
+    whatsapp: '6281234500001',
+  },
   {
     email: 'pelanggan2@lantaidua.test',
     fullName: 'Nadia Salsabila',
     role: 'customer',
     active: true,
+    whatsapp: '6281234500002',
   },
   {
     email: 'pelanggan3@lantaidua.test',
     fullName: 'Dimas Ardiansyah',
     role: 'customer',
     active: true,
+    whatsapp: '6281234500003',
   },
 ] as const;
 
@@ -74,7 +107,12 @@ for (const account of ACCOUNTS) {
 
   const { error } = await admin
     .from('profiles')
-    .update({ full_name: account.fullName, role: account.role, is_active: account.active })
+    .update({
+      full_name: account.fullName,
+      role: account.role,
+      is_active: account.active,
+      whatsapp: account.whatsapp,
+    })
     .eq('id', userId);
   if (error) throw new Error(`Profil ${account.email} gagal diperbarui: ${error.message}`);
 

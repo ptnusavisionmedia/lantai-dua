@@ -1,6 +1,7 @@
 import {
   dateWindow,
   formatDuration,
+  isLive,
   parseReservationQuery,
   wibDate,
 } from '@lantai-dua/shared/reservation';
@@ -8,6 +9,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ReservationForm } from '@/components/reservation/reservation-form';
 import {
+  getMyWhatsapp,
   getReservationViewer,
   getStoreInfo,
   listMyReservations,
@@ -41,16 +43,12 @@ export default async function ReservasiBaruPage({ searchParams }: Props) {
   const tanggal = query.tanggal ?? slots.find((s) => s.available)?.date ?? today;
   // Pelanggan yang sudah mencapai batas reservasi aktif diberi tahu sebelum mengisi formulir,
   // bukan baru saat Konfirmasi ditolak (anti-tujuan desain §2).
-  const now = Date.now();
+  const now = new Date();
   const active =
-    viewer === 'customer'
-      ? (await listMyReservations()).filter(
-          (r) =>
-            (r.status === 'scheduled' || r.status === 'checked_in') &&
-            new Date(r.endsAt).getTime() > now,
-        ).length
-      : 0;
+    viewer === 'customer' ? (await listMyReservations()).filter((r) => isLive(r, now)).length : 0;
   const atLimit = active >= info.maxActiveReservations;
+  // Nomor WhatsApp wajib sebelum reservasi (A4); diminta di formulir kalau belum ada.
+  const needsWhatsapp = viewer === 'customer' && (await getMyWhatsapp()) === null;
   const areaName = chosen[0]?.areaName ?? variants[0]?.areaName ?? 'Meja Kontrol';
 
   return (
@@ -73,6 +71,7 @@ export default async function ReservasiBaruPage({ searchParams }: Props) {
             query={{ ...query, tanggal }}
             viewer={viewer}
             atLimit={atLimit}
+            needsWhatsapp={needsWhatsapp}
           />
         </Suspense>
       </div>

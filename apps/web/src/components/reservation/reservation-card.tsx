@@ -23,7 +23,7 @@ export function ReservationCard({
   withQr?: boolean;
   now: Date;
 }) {
-  const label = reservationStatusLabel(r.status, r.endsAt, now);
+  const label = reservationStatusLabel(r.status, r.endsAt, now, r.cancelReason);
   return (
     <article className="flex flex-wrap items-start gap-4 rounded-lg border border-border bg-surface p-4">
       <div className="min-w-0 flex-1 space-y-1.5">

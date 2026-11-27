@@ -2,6 +2,7 @@ import {
   canCancel,
   formatSession,
   googleCalendarUrl,
+  isLive,
   reservationStatusLabel,
 } from '@lantai-dua/shared/reservation';
 import type { Metadata } from 'next';
@@ -33,8 +34,9 @@ export default async function ReservasiDetailPage({ params, searchParams }: Prop
   if (!reservation) notFound();
   const r = reservation;
   const now = new Date();
-  const label = reservationStatusLabel(r.status, r.endsAt, now);
-  const active = r.status === 'scheduled' || r.status === 'checked_in';
+  const label = reservationStatusLabel(r.status, r.endsAt, now, r.cancelReason);
+  // QR dan kalender hanya berguna selama reservasi aktif dan sesinya belum berakhir.
+  const live = isLive(r, now);
   const upcoming = r.status === 'scheduled' && new Date(r.endsAt).getTime() > now.getTime();
   const isNew = (await searchParams).baru === '1' && r.status === 'scheduled';
   const event = {
@@ -62,6 +64,11 @@ export default async function ReservasiDetailPage({ params, searchParams }: Prop
             <p className="font-mono text-2xl font-semibold tracking-wider text-ink">{r.code}</p>
             <StatusLine tone={label.tone} text={label.text} />
           </div>
+          {r.status === 'cancelled' && r.cancelReason && (
+            <p className="rounded-md border border-border bg-surface-sunken px-3 py-2 text-base [overflow-wrap:anywhere] text-ink">
+              Alasan dari toko: {r.cancelReason}
+            </p>
+          )}
           <dl className="grid gap-3 text-sm">
             <div>
               <dt className="text-ink-muted">Jadwal</dt>
@@ -93,14 +100,14 @@ export default async function ReservasiDetailPage({ params, searchParams }: Prop
             )}
           </dl>
         </div>
-        {active && (
+        {live && (
           <div className="justify-self-start">
             <ReservationQr code={r.code} />
           </div>
         )}
       </div>
 
-      {upcoming && (
+      {live && (
         <div className="flex flex-wrap gap-x-6">
           <a href={`/akun/reservasi/${r.code}/kalender`} className={LINK}>
             Unduh ke kalender (.ics)
