@@ -527,6 +527,164 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_items: {
+        Row: {
+          id: string
+          is_active: boolean
+          period: unknown
+          reservation_id: string
+          unit_id: string
+          variant_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          period: unknown
+          reservation_id: string
+          unit_id: string
+          variant_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          period?: unknown
+          reservation_id?: string
+          unit_id?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_items_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_items_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "counted_demo_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_items_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "demo_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_availability"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_seats: {
+        Row: {
+          area_id: string
+          id: string
+          is_active: boolean
+          period: unknown
+          reservation_id: string
+          seat_no: number
+        }
+        Insert: {
+          area_id: string
+          id?: string
+          is_active?: boolean
+          period: unknown
+          reservation_id: string
+          seat_no: number
+        }
+        Update: {
+          area_id?: string
+          id?: string
+          is_active?: boolean
+          period?: unknown
+          reservation_id?: string
+          seat_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_seats_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "demo_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_seats_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          code: string
+          created_at: string
+          customer_id: string
+          ends_at: string
+          id: string
+          note: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          code: string
+          created_at?: string
+          customer_id: string
+          ends_at: string
+          id?: string
+          note?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          code?: string
+          created_at?: string
+          customer_id?: string
+          ends_at?: string
+          id?: string
+          note?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_closures: {
         Row: {
           date: string
@@ -824,12 +982,41 @@ export type Database = {
       }
     }
     Functions: {
+      area_has_free_seat: {
+        Args: { p_area_id: string; p_period: unknown }
+        Returns: boolean
+      }
+      cancel_reservation: { Args: { p_code: string }; Returns: undefined }
+      create_reservation: {
+        Args: { p_note?: string; p_starts_at: string; p_variant_ids: string[] }
+        Returns: string
+      }
       current_app_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      default_reservation_area: { Args: never; Returns: string }
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      new_reservation_code: { Args: never; Returns: string }
+      plan_reservation: {
+        Args: { p_customer: string; p_period: unknown; p_variant_ids: string[] }
+        Returns: {
+          plan: Json
+          reason: string
+          reason_variant_id: string
+        }[]
+      }
+      reservable_units: {
+        Args: never
+        Returns: {
+          area_id: string
+          code: string
+          status: Database["public"]["Enums"]["demo_unit_status"]
+          unit_id: string
+          variant_id: string
+        }[]
+      }
       revalidate_category_values: {
         Args: { p_category_id: string }
         Returns: undefined
@@ -854,6 +1041,13 @@ export type Database = {
       demo_area_kind: "desk" | "station" | "free"
       demo_unit_status: "available" | "in_use" | "servicing" | "retired"
       image_kind: "main" | "side" | "detail"
+      reservation_status:
+        | "scheduled"
+        | "checked_in"
+        | "completed"
+        | "cancelled"
+        | "no_show"
+        | "unrecorded"
       try_mode: "unit" | "station" | "free"
     }
     CompositeTypes: {
@@ -988,6 +1182,14 @@ export const Constants = {
       demo_area_kind: ["desk", "station", "free"],
       demo_unit_status: ["available", "in_use", "servicing", "retired"],
       image_kind: ["main", "side", "detail"],
+      reservation_status: [
+        "scheduled",
+        "checked_in",
+        "completed",
+        "cancelled",
+        "no_show",
+        "unrecorded",
+      ],
       try_mode: ["unit", "station", "free"],
     },
   },
