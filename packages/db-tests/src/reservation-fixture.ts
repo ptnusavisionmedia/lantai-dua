@@ -125,8 +125,16 @@ export async function createReservationFixture(
     variants.find((v) => v.sku === `${prefix}v-${n}`)?.id as string;
 
   // Kode unit wajib DM-<huruf>-<3 angka>; huruf R hanya dipakai tes reservasi.
-  const base = Math.floor(Math.random() * 990);
-  const code = (i: number) => `DM-R-${String((base + i) % 1000).padStart(3, '0')}`;
+  // Pilih nomor yang belum dipakai, karena file tes lain (atau sisa run yang gagal) juga memakai DM-R.
+  const taken = await must(
+    'unit DM-R yang sudah ada',
+    admin.from('demo_units').select('code').like('code', 'DM-R-%'),
+  );
+  const used = new Set(taken.map((u) => u.code as string));
+  const free = Array.from({ length: 1000 }, (_, n) => `DM-R-${String(n).padStart(3, '0')}`)
+    .filter((c) => !used.has(c))
+    .sort(() => Math.random() - 0.5);
+  const code = (i: number) => free[i] as string;
   const units = await must(
     'unit reservasi',
     admin

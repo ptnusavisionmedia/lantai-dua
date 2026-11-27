@@ -575,6 +575,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reservation_items_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "reservable_unit_list"
+            referencedColumns: ["unit_id"]
+          },
+          {
             foreignKeyName: "reservation_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
@@ -943,6 +950,38 @@ export type Database = {
           },
         ]
       }
+      reservable_unit_list: {
+        Row: {
+          area_id: string | null
+          code: string | null
+          status: Database["public"]["Enums"]["demo_unit_status"] | null
+          unit_id: string | null
+          variant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_units_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "demo_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_availability"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       variant_availability: {
         Row: {
           attributes: Json | null
@@ -1015,6 +1054,34 @@ export type Database = {
           status: Database["public"]["Enums"]["demo_unit_status"]
           unit_id: string
           variant_id: string
+        }[]
+      }
+      reservable_variants: {
+        Args: never
+        Returns: {
+          area_id: string
+          area_name: string
+          assignable_units: number
+          brand_name: string
+          category_name: string
+          category_slug: string
+          category_sort: number
+          model_name: string
+          product_slug: string
+          servicing_units: number
+          sku: string
+          variant_id: string
+          variant_name: string
+        }[]
+      }
+      reservation_slots: {
+        Args: { p_from: string; p_to: string; p_variant_ids: string[] }
+        Returns: {
+          available: boolean
+          ends_at: string
+          reason: string
+          reason_variant_id: string
+          starts_at: string
         }[]
       }
       revalidate_category_values: {
