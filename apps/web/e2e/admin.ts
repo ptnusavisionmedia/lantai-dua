@@ -123,6 +123,17 @@ export async function shiftReservation(code: string, startsAt: Date, minutes = 3
   await updateReservation(code, { starts_at: from, ends_at: to });
 }
 
+/** Status reservasi saat ini, dibaca lewat admin. */
+export async function reservationStatus(code: string): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('reservations')
+    .select('status')
+    .eq('code', code)
+    .single();
+  if (error) throw new Error(`status ${code}: ${error.message}`);
+  return (data as { status: string }).status;
+}
+
 /** Mengubah kolom reservasi langsung lewat admin, untuk menyiapkan keadaan tes. */
 export async function updateReservation(
   code: string,

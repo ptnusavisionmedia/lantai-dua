@@ -60,11 +60,20 @@ export function slotTime(iso: string): string {
   return `${part(p, 'hour')}.${part(p, 'minute')}`;
 }
 
+/** Hari WIB sebuah waktu: "Sab, 28 Nov 2026". */
+export function formatDay(iso: string): string {
+  const p = longParts.formatToParts(new Date(iso));
+  return `${part(p, 'weekday')}, ${part(p, 'day')} ${part(p, 'month')} ${part(p, 'year')}`;
+}
+
 /** "Sab, 28 Nov 2026 · 14.00–14.30 WIB" (PRD §13). */
 export function formatSession(startsAt: string, endsAt: string): string {
-  const p = longParts.formatToParts(new Date(startsAt));
-  const day = `${part(p, 'weekday')}, ${part(p, 'day')} ${part(p, 'month')} ${part(p, 'year')}`;
-  return `${day} · ${slotTime(startsAt)}–${slotTime(endsAt)} WIB`;
+  return `${formatDay(startsAt)} · ${slotTime(startsAt)}–${slotTime(endsAt)} WIB`;
+}
+
+/** Satu titik waktu: "Sab, 28 Nov 2026 · 14.05 WIB". */
+export function formatMoment(iso: string): string {
+  return `${formatDay(iso)} · ${slotTime(iso)} WIB`;
 }
 
 /** 30 → "30 menit", 60 → "1 jam", 90 → "1 jam 30 menit". */

@@ -3,7 +3,9 @@ import {
   addDays,
   dateWindow,
   dayLabel,
+  formatDay,
   formatDuration,
+  formatMoment,
   formatSession,
   slotTime,
   wibDate,
@@ -60,5 +62,12 @@ describe('waktu WIB', () => {
     [120, '2 jam'],
   ])('formats %i minutes', (m, text) => {
     expect(formatDuration(m)).toBe(text);
+  });
+});
+
+describe('formatDay dan formatMoment', () => {
+  it('writes the WIB day and moment, even when UTC is still the day before', () => {
+    expect(formatDay('2026-11-27T17:30:00Z')).toBe('Sab, 28 Nov 2026');
+    expect(formatMoment('2026-11-27T17:30:00Z')).toBe('Sab, 28 Nov 2026 · 00.30 WIB');
   });
 });
