@@ -39,6 +39,13 @@ export function clientFor(persona: Persona): SupabaseClient {
   });
 }
 
+/** Klien persona yang juga login di koneksi realtime, supaya RLS berlaku untuk perubahan yang diterima. */
+export async function realtimeFor(persona: Persona): Promise<SupabaseClient> {
+  const client = clientFor(persona);
+  await client.realtime.setAuth(inject('sessions')[persona].accessToken);
+  return client;
+}
+
 export function userIdOf(persona: Persona): string {
   return inject('sessions')[persona].userId;
 }

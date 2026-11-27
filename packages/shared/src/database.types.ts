@@ -1032,6 +1032,7 @@ export type Database = {
         Returns: boolean
       }
       cancel_reservation: { Args: { p_code: string }; Returns: undefined }
+      close_overdue_reservations: { Args: never; Returns: number }
       create_reservation: {
         Args: { p_note?: string; p_starts_at: string; p_variant_ids: string[] }
         Returns: string
@@ -1086,6 +1087,14 @@ export type Database = {
           full_name: string
           reservation_id: string
           whatsapp: string
+        }[]
+      }
+      reservation_ops_check: {
+        Args: never
+        Returns: {
+          job_active: boolean
+          job_schedule: string
+          realtime_published: boolean
         }[]
       }
       reservation_slots: {
