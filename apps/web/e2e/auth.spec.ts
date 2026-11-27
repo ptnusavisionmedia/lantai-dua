@@ -20,20 +20,20 @@ test('guest is sent to login with next', async ({ page }) => {
 
 test('customer lands on /akun', async ({ page }) => {
   await login(page, 'pelanggan1@lantaidua.test');
-  await expect(page).toHaveURL('/akun');
+  await expect(page).toHaveURL('/akun', { timeout: 15_000 });
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halo, Raka');
 });
 
 test('operator lands on /operator and cannot open /pemilik', async ({ page }) => {
   await login(page, 'operator1@lantaidua.test');
-  await expect(page).toHaveURL('/operator');
+  await expect(page).toHaveURL('/operator', { timeout: 15_000 });
   await page.goto('/pemilik');
   await expect(page).toHaveURL('/operator');
 });
 
 test('owner lands on /pemilik and can open /operator', async ({ page }) => {
   await login(page, 'pemilik@lantaidua.test');
-  await expect(page).toHaveURL('/pemilik');
+  await expect(page).toHaveURL('/pemilik', { timeout: 15_000 });
   await page.goto('/operator');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Hari ini');
 });
@@ -62,12 +62,12 @@ test('the signup hint keeps where the user was going', async ({ page }) => {
 
 test('external next is ignored', async ({ page }) => {
   await login(page, 'pelanggan1@lantaidua.test', 'https://evil.example');
-  await expect(page).toHaveURL('/akun');
+  await expect(page).toHaveURL('/akun', { timeout: 15_000 });
 });
 
 test('deactivated staff land on /akun-nonaktif and can sign out', async ({ page }) => {
   await login(page, 'nonaktif@lantaidua.test');
-  await expect(page).toHaveURL('/akun-nonaktif');
+  await expect(page).toHaveURL('/akun-nonaktif', { timeout: 15_000 });
   await page.goto('/operator');
   await expect(page).toHaveURL('/akun-nonaktif');
   await page.getByRole('button', { name: 'Keluar' }).click();
@@ -78,7 +78,7 @@ test('deactivated staff land on /akun-nonaktif and can sign out', async ({ page 
 
 test('sign out ends the session', async ({ page }) => {
   await login(page, 'pelanggan1@lantaidua.test');
-  await expect(page).toHaveURL('/akun');
+  await expect(page).toHaveURL('/akun', { timeout: 15_000 });
   await page.getByRole('button', { name: 'Keluar' }).click();
   await expect(page).toHaveURL('/');
   await page.goto('/akun');

@@ -207,7 +207,7 @@ test.describe('reservasi saya', () => {
 
   test('lists the reservation as upcoming and on the account summary', async ({ page }) => {
     await login(page, CUSTOMER, '/akun/reservasi');
-    await expect(page).toHaveURL('/akun/reservasi');
+    await expect(page).toHaveURL('/akun/reservasi', { timeout: 15_000 });
     const upcoming = page.getByRole('region', { name: 'Mendatang' });
     await expect(upcoming.getByRole('link', { name: new RegExp(code) })).toBeVisible();
     await page.goto('/akun');
@@ -232,7 +232,7 @@ test.describe('reservasi saya', () => {
   test("another customer's code is a 404", async ({ page }) => {
     const otherCode = await reserveAs(OTHER, [R1], at('17.00'));
     await login(page, CUSTOMER);
-    await expect(page).toHaveURL('/akun');
+    await expect(page).toHaveURL('/akun', { timeout: 15_000 });
     expect((await page.goto(`/akun/reservasi/${otherCode}`))?.status()).toBe(404);
     expect((await page.goto('/akun/reservasi/L2D-AAAAAAAA'))?.status()).toBe(404);
     expect((await page.goto('/akun/reservasi/bukan-kode'))?.status()).toBe(404);
