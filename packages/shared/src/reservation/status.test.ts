@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isReservationCode } from './code';
-import { canCancel, reservationStatusLabel } from './status';
+import { canCancel, isLive, reservationStatusLabel } from './status';
 import { SETTINGS } from './testing';
 
 const now = new Date('2026-11-28T05:00:00Z');
@@ -18,6 +18,29 @@ describe('reservationStatusLabel', () => {
     ['unrecorded', past, 'warn', 'Tidak tercatat'],
   ] as const)('%s ending %s', (status, endsAt, tone, text) => {
     expect(reservationStatusLabel(status, endsAt, now)).toEqual({ tone, text });
+  });
+
+  it('calls a cancellation with a reason "Dibatalkan toko"', () => {
+    expect(reservationStatusLabel('cancelled', future, now, 'Unit rusak')).toEqual({
+      tone: 'none',
+      text: 'Dibatalkan toko',
+    });
+    expect(reservationStatusLabel('cancelled', future, now, null).text).toBe('Dibatalkan');
+  });
+});
+
+describe('isLive', () => {
+  it.each([
+    ['scheduled', future, true],
+    ['checked_in', future, true],
+    ['scheduled', past, false],
+    ['checked_in', past, false],
+    ['completed', future, false],
+    ['cancelled', future, false],
+    ['no_show', future, false],
+    ['unrecorded', future, false],
+  ] as const)('%s ending %s → %s', (status, endsAt, live) => {
+    expect(isLive({ status, endsAt }, now)).toBe(live);
   });
 });
 

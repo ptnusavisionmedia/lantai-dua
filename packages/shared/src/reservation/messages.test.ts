@@ -61,6 +61,7 @@ describe('createErrorText', () => {
     ['too_soon', null, 'Jam ini sudah tidak bisa dipesan. Pilih jam lain.'],
     ['outside_hours', null, 'Jam ini sudah tidak bisa dipesan. Pilih jam lain.'],
     ['not_customer', null, 'Reservasi dibuat dari akun pelanggan.'],
+    ['whatsapp_required', null, 'Isi nomor WhatsApp dulu.'],
     ['aneh', null, 'Gagal menyimpan. Coba lagi sebentar.'],
   ])('maps %s', (code, name, text) => {
     expect(createErrorText(code, name, SETTINGS)).toBe(text);

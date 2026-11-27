@@ -64,6 +64,8 @@ export function createErrorText(
       return 'Jam ini sudah tidak bisa dipesan. Pilih jam lain.';
     case 'not_customer':
       return 'Reservasi dibuat dari akun pelanggan.';
+    case 'whatsapp_required':
+      return 'Isi nomor WhatsApp dulu.';
     default:
       return 'Gagal menyimpan. Coba lagi sebentar.';
   }

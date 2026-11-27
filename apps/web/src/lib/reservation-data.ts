@@ -29,7 +29,7 @@ export const getStoreInfo = cache(async (): Promise<StoreInfo> => {
   const { data, error } = await supabase
     .from('store_settings')
     .select(
-      'session_minutes, min_lead_minutes, max_days_ahead, max_active_reservations, cancel_cutoff_minutes, address, maps_url, whatsapp',
+      'session_minutes, min_lead_minutes, max_days_ahead, max_active_reservations, cancel_cutoff_minutes, checkin_open_minutes, no_show_after_minutes, address, maps_url, whatsapp',
     )
     .single();
   if (error) throw new Error(`Pengaturan toko gagal dimuat: ${error.message}`);
@@ -62,7 +62,7 @@ export async function listSlots(from: string, to: string, variantIds: string[]):
 }
 
 const RESERVATION_SELECT =
-  'id, code, status, starts_at, ends_at, note, reservation_items(variant:product_variants(name, product:products(model_name, brand:brands(name))), unit:demo_units(code, area:demo_areas(name)))';
+  'id, code, status, starts_at, ends_at, note, cancel_reason, reservation_items(variant:product_variants(name, product:products(model_name, brand:brands(name))), unit:demo_units(code, area:demo_areas(name)))';
 
 /** Reservasi milik pelanggan yang login (RLS), urut dari jadwal paling awal. */
 export const listMyReservations = cache(async (): Promise<ReservationView[]> => {

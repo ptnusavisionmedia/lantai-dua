@@ -53,6 +53,10 @@ export type ReservationSettings = {
   maxDaysAhead: number;
   maxActiveReservations: number;
   cancelCutoffMinutes: number;
+  /** Check-in dibuka sekian menit sebelum sesi. */
+  checkinOpenMinutes: number;
+  /** Tidak datang bisa ditandai sekian menit setelah sesi mulai. */
+  noShowAfterMinutes: number;
 };
 
 /** Isi URL formulir `/reservasi/baru`. */
@@ -72,6 +76,8 @@ export type ReservationView = {
   startsAt: string;
   endsAt: string;
   note: string | null;
+  /** Terisi hanya kalau dibatalkan toko (pelanggan tidak pernah mengisi alasan). */
+  cancelReason: string | null;
   areaName: string | null;
   items: ReservationItemView[];
 };
@@ -84,6 +90,7 @@ export type ReservationRowWithItems = {
   starts_at: string;
   ends_at: string;
   note: string | null;
+  cancel_reason: string | null;
   reservation_items: {
     variant: {
       name: string;
@@ -92,3 +99,43 @@ export type ReservationRowWithItems = {
     unit: { code: string; area: { name: string } | null } | null;
   }[];
 };
+
+/** Aksi staf pada reservasi. Setiap aksi menuju satu status (lihat `STAFF_ACTION`). */
+export type StaffAction =
+  | 'check_in'
+  | 'complete'
+  | 'no_show'
+  | 'cancel'
+  | 'undo_check_in'
+  | 'undo_complete'
+  | 'attended';
+
+export type OperatorItem = { name: string; unitCode: string | null; areaName: string | null };
+
+/** Reservasi untuk layar operator: ditambah kontak pelanggan (O7) dan catatan kebersihan (R14). */
+export type OperatorReservation = Omit<ReservationView, 'items'> & {
+  items: OperatorItem[];
+  customerName: string;
+  whatsapp: string | null;
+  hygieneNotes: string[];
+  createdAt: string;
+};
+
+/** Bentuk select reservasi untuk operator: seperti `ReservationRowWithItems`, ditambah kategori. */
+export type OperatorReservationRow = Omit<ReservationRowWithItems, 'reservation_items'> & {
+  created_at: string;
+  reservation_items: {
+    variant: {
+      name: string;
+      product: {
+        model_name: string;
+        brand: { name: string } | null;
+        category: { hygiene_note: string | null } | null;
+      } | null;
+    } | null;
+    unit: { code: string; area: { name: string } | null } | null;
+  }[];
+};
+
+/** Keadaan koneksi realtime di layar operator. */
+export type LiveState = 'live' | 'reconnecting' | 'offline';

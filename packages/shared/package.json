@@ -9,7 +9,8 @@
     "./database": "./src/database.types.ts",
     "./catalog": "./src/catalog/index.ts",
     "./compare": "./src/compare/index.ts",
-    "./reservation": "./src/reservation/index.ts"
+    "./reservation": "./src/reservation/index.ts",
+    "./whatsapp": "./src/whatsapp.ts"
   },
   "scripts": {
     "test": "vitest run",

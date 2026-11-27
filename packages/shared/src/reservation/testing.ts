@@ -6,6 +6,8 @@ export const SETTINGS: ReservationSettings = {
   maxDaysAhead: 14,
   maxActiveReservations: 2,
   cancelCutoffMinutes: 60,
+  checkinOpenMinutes: 60,
+  noShowAfterMinutes: 15,
 };
 
 let counter = 0;

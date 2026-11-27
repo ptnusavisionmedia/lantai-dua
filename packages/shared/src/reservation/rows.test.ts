@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { fromReservableRow, fromReservationRow, fromSettingsRow, fromSlotRow } from './rows';
+import {
+  fromOperatorRow,
+  fromReservableRow,
+  fromReservationRow,
+  fromSettingsRow,
+  fromSlotRow,
+} from './rows';
 
 describe('rows', () => {
   it('maps a reservable variant', () => {
@@ -74,6 +80,8 @@ describe('rows', () => {
         max_days_ahead: 14,
         max_active_reservations: 2,
         cancel_cutoff_minutes: 60,
+        checkin_open_minutes: 60,
+        no_show_after_minutes: 15,
       }),
     ).toEqual({
       sessionMinutes: 30,
@@ -81,6 +89,8 @@ describe('rows', () => {
       maxDaysAhead: 14,
       maxActiveReservations: 2,
       cancelCutoffMinutes: 60,
+      checkinOpenMinutes: 60,
+      noShowAfterMinutes: 15,
     });
   });
 
@@ -93,6 +103,7 @@ describe('rows', () => {
         starts_at: '2026-11-28T07:00:00Z',
         ends_at: '2026-11-28T07:30:00Z',
         note: null,
+        cancel_reason: null,
         reservation_items: [
           {
             variant: {
@@ -111,11 +122,90 @@ describe('rows', () => {
       startsAt: '2026-11-28T07:00:00Z',
       endsAt: '2026-11-28T07:30:00Z',
       note: null,
+      cancelReason: null,
       areaName: 'Meja Kontrol',
       items: [
         { name: 'VortexSeries Ignix F1 · Putih', unitCode: 'DM-M-001' },
         { name: 'Unit demo', unitCode: null },
       ],
     });
+  });
+
+  it('keeps the store cancel reason', () => {
+    const r = fromReservationRow({
+      id: 'r1',
+      code: 'L2D-H7K3QX9P',
+      status: 'cancelled',
+      starts_at: '2026-11-28T07:00:00Z',
+      ends_at: '2026-11-28T07:30:00Z',
+      note: null,
+      cancel_reason: 'Unit rusak',
+      reservation_items: [],
+    });
+    expect(r.cancelReason).toBe('Unit rusak');
+  });
+
+  it('maps an operator row with contact, areas, and unique hygiene notes', () => {
+    const headset = (code: string) => ({
+      variant: {
+        name: 'Standar',
+        product: {
+          model_name: 'Kumo GS1X Pro',
+          brand: { name: 'dbE' },
+          category: { hygiene_note: 'Pasang cover telinga.' },
+        },
+      },
+      unit: { code, area: { name: 'Meja Kontrol' } },
+    });
+    const row = {
+      id: 'r1',
+      code: 'L2D-H7K3QX9P',
+      status: 'scheduled' as const,
+      starts_at: '2026-11-28T07:00:00Z',
+      ends_at: '2026-11-28T07:30:00Z',
+      note: 'Bawa mouse lama',
+      cancel_reason: null,
+      created_at: '2026-11-27T07:00:00Z',
+      reservation_items: [
+        headset('DM-H-001'),
+        headset('DM-H-009'),
+        {
+          variant: {
+            name: 'Putih',
+            product: {
+              model_name: 'Ignix F1',
+              brand: { name: 'VortexSeries' },
+              category: { hygiene_note: null },
+            },
+          },
+          unit: { code: 'DM-M-001', area: null },
+        },
+      ],
+    };
+    expect(fromOperatorRow(row, { full_name: 'Raka Pratama', whatsapp: '6281234500001' })).toEqual({
+      id: 'r1',
+      code: 'L2D-H7K3QX9P',
+      status: 'scheduled',
+      startsAt: '2026-11-28T07:00:00Z',
+      endsAt: '2026-11-28T07:30:00Z',
+      note: 'Bawa mouse lama',
+      cancelReason: null,
+      areaName: 'Meja Kontrol',
+      createdAt: '2026-11-27T07:00:00Z',
+      customerName: 'Raka Pratama',
+      whatsapp: '6281234500001',
+      hygieneNotes: ['Pasang cover telinga.'],
+      items: [
+        { name: 'dbE Kumo GS1X Pro · Standar', unitCode: 'DM-H-001', areaName: 'Meja Kontrol' },
+        { name: 'dbE Kumo GS1X Pro · Standar', unitCode: 'DM-H-009', areaName: 'Meja Kontrol' },
+        { name: 'VortexSeries Ignix F1 · Putih', unitCode: 'DM-M-001', areaName: null },
+      ],
+    });
+    const anonymous = fromOperatorRow(row, undefined);
+    expect(anonymous.customerName).toBe('Pelanggan');
+    expect(anonymous.whatsapp).toBeNull();
+    expect(fromOperatorRow(row, { full_name: '  ', whatsapp: null }).customerName).toBe(
+      'Pelanggan',
+    );
   });
 });
