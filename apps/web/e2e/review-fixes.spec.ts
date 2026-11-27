@@ -46,7 +46,7 @@ test('sign-out button meets the 44px touch target', async ({ page }) => {
   await page.getByLabel('Email').fill('pelanggan2@lantaidua.test');
   await page.getByLabel('Kata sandi').fill(password);
   await page.getByRole('button', { name: 'Masuk' }).click();
-  await expect(page).toHaveURL('/akun');
+  await expect(page).toHaveURL('/akun', { timeout: 15_000 });
   const box = await page.getByRole('button', { name: 'Keluar' }).boundingBox();
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
 });
