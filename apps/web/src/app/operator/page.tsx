@@ -7,7 +7,9 @@ import {
 } from '@lantai-dua/shared/reservation';
 import type { Metadata } from 'next';
 import { DashboardTitle } from '@/components/dashboard-shell';
+import { CodeScanner } from '@/components/operator/code-scanner';
 import { CodeSearch } from '@/components/operator/code-search';
+import { LiveRefresh } from '@/components/operator/live-refresh';
 import { ReservationRow } from '@/components/operator/reservation-row';
 import { getOpeningToday, listTodayForOperator, listUnrecorded } from '@/lib/operator-data';
 import { getStoreInfo } from '@/lib/reservation-data';
@@ -31,15 +33,20 @@ export default async function OperatorPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <DashboardTitle>Hari ini</DashboardTitle>
-        <p className="text-ink-muted">
-          {formatDay(nowIso)} ·{' '}
-          {hours ? `buka ${hours.opens}–${hours.closes}` : 'Toko tutup hari ini'}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <DashboardTitle>Hari ini</DashboardTitle>
+          <p className="text-ink-muted">
+            {formatDay(nowIso)} ·{' '}
+            {hours ? `buka ${hours.opens}–${hours.closes}` : 'Toko tutup hari ini'}
+          </p>
+        </div>
+        <LiveRefresh today={today} />
       </div>
 
-      <CodeSearch />
+      <CodeSearch>
+        <CodeScanner />
+      </CodeSearch>
 
       {unrecorded.length > 0 && (
         <section aria-labelledby="koreksi" className="space-y-3">

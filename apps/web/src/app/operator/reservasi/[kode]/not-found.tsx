@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CodeScanner } from '@/components/operator/code-scanner';
 import { CodeSearch } from '@/components/operator/code-search';
 
 /** Kode yang tidak ada: tampilkan lagi kolom kode supaya operator bisa mencoba lagi. */
@@ -15,7 +16,9 @@ export default function OperatorReservationNotFound() {
         <h1 className="font-display mt-2 text-2xl font-bold">Kode reservasi tidak ditemukan</h1>
         <p className="mt-2 text-ink-muted">Periksa lagi kodenya, atau scan ulang QR pelanggan.</p>
       </div>
-      <CodeSearch />
+      <CodeSearch>
+        <CodeScanner />
+      </CodeSearch>
     </div>
   );
 }

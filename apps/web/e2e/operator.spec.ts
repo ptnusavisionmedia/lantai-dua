@@ -164,3 +164,28 @@ test('fits a 360 px screen', async ({ page }) => {
   await asOperator(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
+
+test('shows a new reservation without reloading', async ({ page }) => {
+  await asOperator(page);
+  await expect(page.getByText('Langsung', { exact: true })).toBeVisible({ timeout: 15_000 });
+  let reloaded = false;
+  page.on('load', () => {
+    reloaded = true;
+  });
+  const code = await make(['L2-VTX-IGNIXR1PRO-BLK'], at(-5));
+  await expect(rowOf(page, code)).toBeVisible({ timeout: 10_000 });
+  expect(reloaded).toBe(false);
+  await updateReservation(code, { status: 'cancelled', cancel_reason: 'bersih-bersih tes' });
+});
+
+test('explains a blocked camera and keeps the code field usable', async ({ page }) => {
+  await asOperator(page);
+  await page.getByRole('button', { name: 'Scan kamera' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Scan QR reservasi' });
+  await expect(dialog.getByText('Kamera tidak bisa dipakai. Ketik kodenya saja.')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Tutup' }).click();
+  await expect(dialog).toBeHidden();
+  await page.getByLabel('Kode reservasi').fill(first);
+  await page.getByRole('button', { name: 'Buka' }).click();
+  await expect(page).toHaveURL(`/operator/reservasi/${first}`);
+});
