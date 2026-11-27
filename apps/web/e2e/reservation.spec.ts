@@ -133,3 +133,95 @@ test.describe('formulir reservasi', () => {
     await clearReservations([CUSTOMER, OTHER]);
   });
 });
+
+test.describe('reservasi saya', () => {
+  const day = wibDateIn(4);
+  const at = (hhmm: string) => startsAtOn(day, hhmm);
+  const unitCode = product('vortexseries-ignix-f1').demoUnits[0]?.code ?? '';
+  let code = '';
+
+  test.beforeAll(async () => {
+    await clearReservations([CUSTOMER, OTHER]);
+    code = await reserveAs(CUSTOMER, [F1], at('14.00'));
+  });
+
+  test('shows the code, QR, schedule, items and address', async ({ page }) => {
+    await login(page, CUSTOMER, `/akun/reservasi/${code}?baru=1`);
+    await expect(page).toHaveURL(new RegExp(`/akun/reservasi/${code}`), { timeout: 15_000 });
+    await expect(page.getByText('Reservasi berhasil dibuat.')).toBeVisible();
+    await expect(page.getByText(code, { exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: `QR ${code}` })).toBeVisible();
+    await expect(page.getByText(/· 14\.00–14\.30 WIB$/)).toBeVisible();
+    await expect(page.getByText(`${variantLabelOf(F1)} · ${unitCode}`)).toBeVisible();
+    await expect(page.getByText('Terjadwal', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute(
+      'href',
+      /^https:\/\/wa\.me\/62\d+$/,
+    );
+  });
+
+  test('offers an ics file and a Google Calendar link', async ({ page }) => {
+    await login(page, CUSTOMER, `/akun/reservasi/${code}`);
+    await expect(page).toHaveURL(new RegExp(`/akun/reservasi/${code}`), { timeout: 15_000 });
+    const ics = page.getByRole('link', { name: 'Unduh ke kalender (.ics)' });
+    const href = (await ics.getAttribute('href')) ?? '';
+    const res = await page.request.get(href);
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type']).toContain('text/calendar');
+    expect(res.headers()['content-disposition']).toContain(`lantai-dua-${code}.ics`);
+    expect(await res.text()).toContain(`UID:${code}@lantaidua`);
+    const google = page.getByRole('link', { name: 'Tambah ke Google Calendar' });
+    await expect(google).toHaveAttribute('href', /calendar\.google\.com.*dates=/);
+  });
+
+  test('lists the reservation as upcoming and on the account summary', async ({ page }) => {
+    await login(page, CUSTOMER, '/akun/reservasi');
+    await expect(page).toHaveURL('/akun/reservasi');
+    const upcoming = page.getByRole('region', { name: 'Mendatang' });
+    await expect(upcoming.getByRole('link', { name: new RegExp(code) })).toBeVisible();
+    await page.goto('/akun');
+    await expect(page.getByRole('img', { name: `QR ${code}` })).toBeVisible();
+    await page.getByRole('link', { name: 'Reservasi', exact: true }).click();
+    await expect(page).toHaveURL('/akun/reservasi');
+  });
+
+  test('cancels after confirming', async ({ page }) => {
+    await login(page, CUSTOMER, `/akun/reservasi/${code}`);
+    await expect(page).toHaveURL(new RegExp(`/akun/reservasi/${code}`), { timeout: 15_000 });
+    await page.getByRole('button', { name: 'Batalkan reservasi' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Batalkan reservasi ini?' });
+    await dialog.getByRole('button', { name: 'Ya, batalkan' }).click();
+    await expect(page.getByText('Dibatalkan', { exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: `QR ${code}` })).toHaveCount(0);
+    await page.goto('/akun/reservasi');
+    const history = page.getByRole('region', { name: 'Riwayat' });
+    await expect(history.getByRole('link', { name: new RegExp(code) })).toBeVisible();
+  });
+
+  test("another customer's code is a 404", async ({ page }) => {
+    const otherCode = await reserveAs(OTHER, [R1], at('17.00'));
+    await login(page, CUSTOMER);
+    await expect(page).toHaveURL('/akun');
+    expect((await page.goto(`/akun/reservasi/${otherCode}`))?.status()).toBe(404);
+    expect((await page.goto('/akun/reservasi/L2D-AAAAAAAA'))?.status()).toBe(404);
+    expect((await page.goto('/akun/reservasi/bukan-kode'))?.status()).toBe(404);
+  });
+
+  test('guests are sent to login', async ({ page }) => {
+    await page.goto('/akun/reservasi');
+    await expect(page).toHaveURL('/masuk?next=%2Fakun%2Freservasi');
+  });
+
+  test('fits 360 px without horizontal scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await login(page, CUSTOMER, `/akun/reservasi/${code}`);
+    await expect(page).toHaveURL(new RegExp(`/akun/reservasi/${code}`), { timeout: 15_000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      360,
+    );
+  });
+
+  test.afterAll(async () => {
+    await clearReservations([CUSTOMER, OTHER]);
+  });
+});

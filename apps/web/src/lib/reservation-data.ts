@@ -1,9 +1,13 @@
 import {
   fromReservableRow,
+  fromReservationRow,
   fromSettingsRow,
   fromSlotRow,
+  isReservationCode,
   type ReservableVariant,
+  type ReservationRowWithItems,
   type ReservationSettings,
+  type ReservationView,
   type Slot,
 } from '@lantai-dua/shared/reservation';
 import { cache } from 'react';
@@ -56,6 +60,41 @@ export async function listSlots(from: string, to: string, variantIds: string[]):
   if (error) throw new Error(`Jadwal gagal dimuat: ${error.message}`);
   return data.map(fromSlotRow);
 }
+
+const RESERVATION_SELECT =
+  'id, code, status, starts_at, ends_at, note, reservation_items(variant:product_variants(name, product:products(model_name, brand:brands(name))), unit:demo_units(code, area:demo_areas(name)))';
+
+/** Reservasi milik pelanggan yang login (RLS), urut dari jadwal paling awal. */
+export const listMyReservations = cache(async (): Promise<ReservationView[]> => {
+  const supabase = await createServerSupabase();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from('reservations')
+    .select(RESERVATION_SELECT)
+    .eq('customer_id', userId)
+    .order('starts_at');
+  if (error) throw new Error(`Reservasi gagal dimuat: ${error.message}`);
+  return (data as unknown as ReservationRowWithItems[]).map(fromReservationRow);
+});
+
+/** Satu reservasi milik pelanggan yang login; null kalau kodenya tidak sah atau bukan miliknya. */
+export const getMyReservation = cache(async (code: string): Promise<ReservationView | null> => {
+  if (!isReservationCode(code)) return null;
+  const supabase = await createServerSupabase();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from('reservations')
+    .select(RESERVATION_SELECT)
+    .eq('code', code)
+    .eq('customer_id', userId)
+    .maybeSingle();
+  if (error) throw new Error(`Reservasi gagal dimuat: ${error.message}`);
+  return data ? fromReservationRow(data as unknown as ReservationRowWithItems) : null;
+});
 
 export async function getReservationViewer(): Promise<ReservationViewer> {
   const { viewer } = await getCurrentViewer();

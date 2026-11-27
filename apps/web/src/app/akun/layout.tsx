@@ -11,6 +11,7 @@ export default async function AkunLayout({ children }: { children: ReactNode }) 
       userName={me.fullName}
       nav={[
         { href: '/akun', label: 'Ringkasan' },
+        { href: '/akun/reservasi', label: 'Reservasi' },
         { href: '/akun/wishlist', label: 'Wishlist' },
       ]}
     >
